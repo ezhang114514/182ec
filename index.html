@@ -1,19 +1,122 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Special Participation Explorer</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EECS182 Extra Credit Digest</title>
 
-    <link rel="stylesheet" href="css/globals.css" />
-    <link rel="stylesheet" href="css/layout.css" />
-    <link rel="stylesheet" href="css/components.css" />
-  </head>
+  <!-- use YOUR folder name: css/styles.css -->
+  <link rel="stylesheet" href="./css/styles.css" />
 
-  <body>
-    <div id="app"></div>
+  <!-- use YOUR folder name: js/main.js -->
+  <script defer type="module" src="./js/main.js"></script>
+</head>
 
-    <!-- IMPORTANT: module so imports work -->
-    <script type="module" src="js/main.js"></script>
-  </body>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true"></div>
+        <div class="brand__text">
+          <div class="brand__title">EECS182</div>
+          <div class="brand__sub">Extra Credit Digest</div>
+        </div>
+      </div>
+
+      <nav class="topnav" aria-label="Primary">
+        <a href="#" class="topnav__link is-active" data-filter="all">The Latest</a>
+        <a href="#" class="topnav__link" data-filter="E">Special Participation E</a>
+        <a href="#" class="topnav__link" data-filter="A">Special Participation A</a>
+        <a href="#" class="topnav__link" data-filter="B">Special Participation B</a>
+        <a href="#" class="topnav__link" data-filter="D">Special Participation D</a>
+
+        <!-- optional: overflow dropdown for more categories later -->
+        <details class="topnav__more">
+          <summary class="topnav__link">More</summary>
+          <div class="topnav__panel">
+            <a href="#" class="topnav__item" data-filter="coord">Coordination</a>
+            <a href="#" class="topnav__item" data-filter="meta">Meta / Tools</a>
+          </div>
+        </details>
+      </nav>
+
+      <div class="actions">
+        <label class="search">
+          <span class="sr-only">Search</span>
+          <input id="searchInput" type="search" placeholder="Search by student, keyword, tag…" />
+        </label>
+      </div>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <main id="content" class="page">
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero__media" aria-hidden="true"></div>
+      <div class="hero__content">
+        <div class="kicker" id="heroKicker">Featured</div>
+        <h1 class="hero__title" id="heroTitle">Loading…</h1>
+        <p class="dek" id="heroDek"></p>
+        <div class="meta" id="heroMeta"></div>
+        <div class="hero__cta">
+          <button class="btn" id="heroOpen" disabled>Read</button>
+        </div>
+
+        <p class="error" id="errorBox" hidden></p>
+      </div>
+    </section>
+
+    <!-- BODY -->
+    <section class="grid">
+      <div class="maincol">
+        <div class="section-head">
+          <h2 class="section-title">Latest</h2>
+          <div class="section-sub" id="resultsMeta"></div>
+        </div>
+        <div id="feed" class="textGrid" aria-live="polite"></div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="card">
+          <h3 class="card__title">Highlights</h3>
+          <div id="highlights" class="mini-list"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title">Browse Tags</h3>
+          <div id="chipRow" class="chips"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card__title">About</h3>
+          <p class="card__text">
+            A readable directory of EECS182 extra credit submissions with student attribution and links.
+          </p>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <!-- READER MODAL -->
+  <dialog id="reader" class="reader">
+    <form method="dialog" class="reader__close">
+      <button class="btn btn--ghost" aria-label="Close">Close</button>
+    </form>
+
+    <article class="reader__article">
+      <div class="kicker" id="rKicker"></div>
+      <h2 id="rTitle"></h2>
+      <div class="meta" id="rMeta"></div>
+      <div class="reader__links" id="rLinks"></div>
+      <hr class="soft" />
+      <div class="reader__body" id="rBody"></div>
+      <div class="attachments" id="rAttachments"></div>
+    </article>
+  </dialog>
+</body>
 </html>
+
+

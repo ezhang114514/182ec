@@ -1,0 +1,39 @@
+[
+  {
+    "id": "ed-7452195",
+    "cover_image": "./assets/images/ssm-cover.png",
+    "category": "E",
+    "subcategory": "Helping understand existing content",
+    "title": "ChatGPT State Space Models Tutoring Using Study & Learn Mode on GPT 5.1",
+    "dek": "A tutoring-style interaction using “Study and Learn” mode to walk through SSM lecture PDFs and adapt explanations based on the student’s confidence.",
+    "student": "Paul Struble",
+    "date": "2025-12-10",
+    "tags": ["SSM", "tutoring", "study and learn", "GPT 5.1"],
+    "links": {
+      "ed": "https://edstem.org/us/courses/84647/discussion/7452195",
+      "share": "https://chatgpt.com/share/693a7636-a964-8007-9fb7-ad29c14ccedb"
+    },
+    "body_html": "<p>This entry summarizes an interaction using ChatGPT’s “Study and Learn” mode to tutor State Space Models (SSMs) from lecture PDFs. It focuses on how the tutor adapts when the student shows more or less confidence.</p>",
+    "attachments": [
+      { "name": "Special Participation E.pdf", "url": "./assets/Special%20Participation%20E.pdf" }
+    ],
+    "highlight": true
+  },
+  {
+    "id": "demo-2",
+    "category": "A",
+    "subcategory": "LLM behavior",
+    "title": "Common failure modes when prompting for derivations",
+    "dek": "A short catalog of hallucination patterns and a few prompt tactics to reduce them.",
+    "student": "Demo Student",
+    "date": "2025-12-11",
+    "tags": ["prompting", "math", "reliability"],
+    "links": { "github": "https://github.com/" },
+    "body_html": "<p>Add the full text here (HTML) or keep it as a short preview.</p>",
+    "attachments": [],
+    "highlight": false
+  }
+]
+
+
+  
