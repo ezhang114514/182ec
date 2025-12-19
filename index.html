@@ -7,6 +7,25 @@
 
   <!-- use YOUR folder name: css/styles.css -->
   <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/similarPosts.js"></script>
+  <script src="https://d3js.org/d3-hierarchy.v3.min.js"></script>
+  <script src="./js/treemap.js"></script>
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <!-- use YOUR folder name: js/main.js -->
   <script defer type="module" src="./js/main.js"></script>
@@ -15,107 +34,708 @@
 <body>
   <a class="skip" href="#content">Skip to content</a>
 
-  <header class="site-header">
-    <div class="topbar">
-      <div class="brand">
-        <div class="brand__mark" aria-hidden="true"></div>
-        <div class="brand__text">
-          <div class="brand__title">EECS182</div>
-          <div class="brand__sub">Extra Credit Digest</div>
-        </div>
-      </div>
-
-      <nav class="topnav" aria-label="Primary">
-        <a href="#" class="topnav__link is-active" data-filter="all">The Latest</a>
-        <a href="#" class="topnav__link" data-filter="E">Special Participation E</a>
-        <a href="#" class="topnav__link" data-filter="A">Special Participation A</a>
-        <a href="#" class="topnav__link" data-filter="B">Special Participation B</a>
-        <a href="#" class="topnav__link" data-filter="D">Special Participation D</a>
-
-        <!-- optional: overflow dropdown for more categories later -->
-        <details class="topnav__more">
-          <summary class="topnav__link">More</summary>
-          <div class="topnav__panel">
-            <a href="#" class="topnav__item" data-filter="coord">Coordination</a>
-            <a href="#" class="topnav__item" data-filter="meta">Meta / Tools</a>
-          </div>
-        </details>
-      </nav>
-
-      <div class="actions">
-        <label class="search">
-          <span class="sr-only">Search</span>
-          <input id="searchInput" type="search" placeholder="Search by student, keyword, tag…" />
-        </label>
-      </div>
-    </div>
-    <div class="rule"></div>
+  <header class="top-title">
+    <span class="mastheadTitle">COMPSCI C182</span>
   </header>
 
   <main id="content" class="page">
     <!-- HERO -->
-    <section class="hero">
-      <div class="hero__media" aria-hidden="true"></div>
-      <div class="hero__content">
-        <div class="kicker" id="heroKicker">Featured</div>
-        <h1 class="hero__title" id="heroTitle">Loading…</h1>
-        <p class="dek" id="heroDek"></p>
-        <div class="meta" id="heroMeta"></div>
-        <div class="hero__cta">
-          <button class="btn" id="heroOpen" disabled>Read</button>
-        </div>
-
-        <p class="error" id="errorBox" hidden></p>
+    <section class="hero hero--fullscreen">
+      <div class="hero__content hero__content--overlay">
+        <h1 class="hero__title">An Exploration of Special Participation E</h1>
+        <p class="dek">A curated collection of student contributions for COMPSCI C182. Explore submissions including Learning Tools & Tutors, Understanding Concepts, Cheatsheets & Notes, Generating Questions, New Content Creation, and Visualizations.</p>
       </div>
+      <img class="hero__bg" src="./assets/images/Final_NewYorker_Cognitive.gif" alt="Hero illustration" />
     </section>
 
-    <!-- BODY -->
-    <section class="grid">
-      <div class="maincol">
-        <div class="section-head">
-          <h2 class="section-title">Latest</h2>
-          <div class="section-sub" id="resultsMeta"></div>
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav" aria-label="Secondary">
+      <a href="index.html" class="bottom-nav__link">Overview</a>
+      <a href="directory.html" class="bottom-nav__link">Directory</a>
+    </nav>
+
+    <!-- Tag Map Section -->
+    <section class="tag-map-section">
+      <h2 class="tag-map-heading">Course Concepts Map</h2>
+      <div id="tagMap" class="tag-map-container" aria-label="Tag frequency visualization"></div>
+    </section>
+
+    <!-- Categories Carousel Section -->
+    <section class="categories-section">
+      <h2 class="categories-heading">CATEGORIES</h2>
+      <div id="categoriesCarousel" class="category-carousel" aria-label="Browse by category"></div>
+    </section>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard-section" class="dashboard-section">
+      <div class="dashboard-container">
+        <!-- Material-style Tab Bar -->
+        <nav class="dashboard-tabs" aria-label="Dashboard navigation">
+          <button class="tab-item active" data-view="summary">Summary</button>
+          <button class="tab-item" data-view="heatmap">Submission Heatmap</button>
+          <button class="tab-item" data-view="timeline">Daily Post Volume</button>
+          <button class="tab-item" data-view="categories">Category Breakdown</button>
+          <button class="tab-item" data-view="weekly">Weekly Breakdown</button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="dashboard-main">
+          <!-- Left Column: Chart Content -->
+          <div class="dashboard-chart-area">
+            <!-- Summary View -->
+            <div class="dashboard-view active" id="view-summary">
+              <h2 class="view-title">Summary</h2>
+              <p class="view-description">Overview of submission statistics and key metrics.</p>
+              <div class="stats-row">
+                <div class="stat-card">
+                  <h3>Total Submissions</h3>
+                  <div class="value" id="totalCount">-</div>
+                </div>
+                <div class="stat-card">
+                  <h3>Date Range</h3>
+                  <div class="value" id="dateRange" style="font-size: 1rem;">-</div>
+                </div>
+                <div class="stat-card">
+                  <h3>Peak Day</h3>
+                  <div class="value" id="peakDay" style="font-size: 1rem;">-</div>
+                  <div class="change" id="peakCount"></div>
+                </div>
+                <div class="stat-card">
+                  <h3>Avg Per Day</h3>
+                  <div class="value" id="avgPerDay">-</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Heatmap View -->
+            <div class="dashboard-view" id="view-heatmap">
+              <h2 class="view-title">Submission Heatmap</h2>
+              <p class="view-description">Visual representation of submission activity over time, with intensity indicating volume.</p>
+              <div class="heatmap-container">
+                <div class="month-labels" id="monthLabels"></div>
+                <div class="heatmap" id="heatmap"></div>
+              </div>
+              <div class="heatmap-legend">
+                <span>Less</span>
+                <div class="heatmap-legend-item" style="background: #161b22;"></div>
+                <div class="heatmap-legend-item" style="background: #0e4429;"></div>
+                <div class="heatmap-legend-item" style="background: #006d32;"></div>
+                <div class="heatmap-legend-item" style="background: #26a641;"></div>
+                <div class="heatmap-legend-item" style="background: #39d353;"></div>
+                <span>More</span>
+              </div>
+            </div>
+
+            <!-- Timeline View -->
+            <div class="dashboard-view" id="view-timeline">
+              <h2 class="view-title">Daily Post Volume</h2>
+              <p class="view-description">Bar chart showing the number of submissions per day over the entire period.</p>
+              <div class="timeline-chart" id="timelineChart"></div>
+            </div>
+
+            <!-- Categories View -->
+            <div class="dashboard-view" id="view-categories">
+              <h2 class="view-title">Category Breakdown</h2>
+              <p class="view-description">Distribution of submissions across different categories.</p>
+              <div class="category-bars" id="categoryBars"></div>
+            </div>
+
+            <!-- Weekly View -->
+            <div class="dashboard-view" id="view-weekly">
+              <h2 class="view-title">Weekly Breakdown</h2>
+              <p class="view-description">Submission activity grouped by week, showing trends over time.</p>
+              <div class="week-grid" id="weekGrid"></div>
+            </div>
+          </div>
         </div>
-        <div id="feed" class="textGrid" aria-live="polite"></div>
       </div>
-
-      <aside class="sidebar">
-        <div class="card">
-          <h3 class="card__title">Highlights</h3>
-          <div id="highlights" class="mini-list"></div>
-        </div>
-
-        <div class="card">
-          <h3 class="card__title">Browse Tags</h3>
-          <div id="chipRow" class="chips"></div>
-        </div>
-
-        <div class="card">
-          <h3 class="card__title">About</h3>
-          <p class="card__text">
-            A readable directory of EECS182 extra credit submissions with student attribution and links.
-          </p>
-        </div>
-      </aside>
     </section>
   </main>
 
   <!-- READER MODAL -->
   <dialog id="reader" class="reader">
     <form method="dialog" class="reader__close">
-      <button class="btn btn--ghost" aria-label="Close">Close</button>
+      <button class="btn btn--ghost close-icon-btn" aria-label="Close">×</button>
     </form>
 
     <article class="reader__article">
-      <div class="kicker" id="rKicker"></div>
-      <h2 id="rTitle"></h2>
-      <div class="meta" id="rMeta"></div>
-      <div class="reader__links" id="rLinks"></div>
-      <hr class="soft" />
-      <div class="reader__body" id="rBody"></div>
-      <div class="attachments" id="rAttachments"></div>
+      <div class="article-detail-layout">
+        <!-- Left Column: Metadata (Sticky) -->
+        <aside class="article-metadata">
+          <h1 id="rTitle" class="article-title"></h1>
+          
+          <div class="metadata-section">
+            <div class="metadata-row">
+              <span class="metadata-label">Author</span>
+              <span id="rAuthor" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Date</span>
+              <span id="rDate" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Category</span>
+              <span id="rCategory" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row" id="rTagsRow" style="display: none;">
+              <span class="metadata-label">Tags</span>
+              <div id="rTags" class="metadata-tags"></div>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="action-btn" id="backBtn" onclick="window.history.back()">
+              ← Back to list
+            </button>
+            <div id="rLinks" class="action-links"></div>
+            <button class="action-btn" id="copyLinkBtn">
+              📋 Copy link
+            </button>
+          </div>
+        </aside>
+
+        <!-- Right Column: Accordion Sections -->
+        <div class="article-content">
+          <div class="accordion-section" data-section="overview">
+            <button class="accordion-header" aria-expanded="false">
+              <span>Overview</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content" id="rOverview"></div>
+          </div>
+
+          <div class="accordion-section" data-section="content">
+            <button class="accordion-header" aria-expanded="true">
+              <span>Full Content</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content active" id="rBody"></div>
+          </div>
+
+          <div class="accordion-section" data-section="attachments" id="rAttachmentsSection" style="display: none;">
+            <button class="accordion-header" aria-expanded="false">
+              <span>Attachments</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content" id="rAttachments"></div>
+          </div>
+        </div>
+      </div>
     </article>
   </dialog>
+
+  <script>
+    async function loadDashboard() {
+      const res = await fetch('./data/articles.json');
+      const data = await res.json();
+      
+      // Process dates
+      const byDate = {};
+      const byCategory = {};
+      const byWeek = {};
+      
+      data.forEach(item => {
+        const date = item.date || 'Unknown';
+        // Dates are already in YYYY-MM-DD format, use as-is to avoid timezone issues
+        if (date !== 'Unknown' && typeof date === 'string') {
+          // Validate date format (YYYY-MM-DD)
+          const dateMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+          if (dateMatch) {
+            byDate[date] = (byDate[date] || 0) + 1;
+            
+            // Week grouping
+            const d = new Date(date + 'T12:00:00'); // Use noon to avoid timezone edge cases
+            const weekStart = new Date(d);
+            weekStart.setDate(d.getDate() - d.getDay());
+            const weekKey = weekStart.toISOString().split('T')[0];
+            byWeek[weekKey] = (byWeek[weekKey] || 0) + 1;
+          } else {
+            // Invalid date format, count as Unknown
+            byDate['Unknown'] = (byDate['Unknown'] || 0) + 1;
+          }
+        } else {
+          byDate['Unknown'] = (byDate['Unknown'] || 0) + 1;
+        }
+        
+        const cat = item.subcategory || 'Other';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
+      });
+      
+      // Stats
+      document.getElementById('totalCount').textContent = data.length;
+      
+      // Debug: Check for date issues
+      console.log('=== Date Processing Debug ===');
+      console.log('Total items:', data.length);
+      const allDateKeys = Object.keys(byDate);
+      const validDateKeys = allDateKeys.filter(d => d !== 'Unknown');
+      console.log('Total keys in byDate:', allDateKeys.length);
+      console.log('Valid dates (excluding Unknown):', validDateKeys.length);
+      console.log('Sample dates:', validDateKeys.slice(0, 5), '...', validDateKeys.slice(-5));
+      console.log('Last 5 date counts:', validDateKeys.slice(-5).map(d => byDate[d]));
+      
+      // Get unique, sorted dates and ensure no duplicates
+      // Object.keys() already returns unique keys, but double-check with Set
+      const uniqueDates = [...new Set(validDateKeys)];
+      const dates = uniqueDates.sort();
+      
+      if (validDateKeys.length !== uniqueDates.length) {
+        console.warn('⚠️ Duplicate dates found in byDate keys:', validDateKeys.length - uniqueDates.length);
+        const duplicates = validDateKeys.filter((d, i) => validDateKeys.indexOf(d) !== i);
+        console.warn('Duplicate date strings:', duplicates);
+      }
+      
+      console.log('Final dates array length:', dates.length);
+      console.log('Last 5 dates in sorted array:', dates.slice(-5));
+      console.log('Last 5 counts for sorted dates:', dates.slice(-5).map(d => byDate[d]));
+      console.log('=== End Date Processing Debug ===');
+      if (dates.length) {
+        document.getElementById('dateRange').textContent = `${dates[0]} to ${dates[dates.length-1]}`;
+      }
+      
+      const peakDate = Object.entries(byDate).sort((a,b) => b[1] - a[1])[0];
+      if (peakDate) {
+        document.getElementById('peakDay').textContent = peakDate[0];
+        document.getElementById('peakCount').textContent = `${peakDate[1]} submissions`;
+      }
+      
+      const activeDays = dates.length;
+      document.getElementById('avgPerDay').textContent = activeDays ? (data.length / activeDays).toFixed(1) : '-';
+      
+      // Build Heatmap
+      buildHeatmap(byDate, dates);
+      
+      // Build Timeline
+      buildTimeline(byDate, dates);
+      
+      // Category bars
+      buildCategoryBars(byCategory, data.length);
+      
+      // Week grid
+      buildWeekGrid(byWeek);
+    }
+    
+    function buildHeatmap(byDate, dates) {
+      if (!dates.length) return;
+      
+      const heatmap = document.getElementById('heatmap');
+      const monthLabels = document.getElementById('monthLabels');
+      
+      // Clear previous content
+      heatmap.innerHTML = '';
+      monthLabels.innerHTML = '';
+      
+      const start = new Date(dates[0]);
+      const end = new Date(dates[dates.length - 1]);
+      
+      // Adjust to start of week
+      start.setDate(start.getDate() - start.getDay());
+      
+      const maxCount = Math.max(...Object.values(byDate));
+      const weeks = [];
+      const monthPositions = new Map(); // Track month positions
+      
+      let current = new Date(start);
+      let currentWeek = [];
+      let weekIndex = 0;
+      
+      while (current <= end || currentWeek.length > 0) {
+        const dateStr = current.toISOString().split('T')[0];
+        const count = byDate[dateStr] || 0;
+        const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / maxCount) * 4));
+        
+        // Track month labels (show at start of each month, around day 1-7)
+        const monthName = current.toLocaleString('default', { month: 'short' });
+        if (current.getDate() <= 7 && !monthPositions.has(monthName)) {
+          monthPositions.set(monthName, weekIndex);
+        }
+        
+        currentWeek.push({
+          date: dateStr,
+          count,
+          level,
+          day: current.getDay()
+        });
+        
+        if (current.getDay() === 6 || current > end) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+          weekIndex++;
+        }
+        
+        current.setDate(current.getDate() + 1);
+        if (current > end && currentWeek.length === 0) break;
+      }
+      
+      // Build heatmap weeks first to calculate widths
+      weeks.forEach(week => {
+        const weekEl = document.createElement('div');
+        weekEl.className = 'heatmap-week';
+        
+        // Fill in missing days at start
+        for (let i = 0; i < week[0].day; i++) {
+          const empty = document.createElement('div');
+          empty.className = 'heatmap-day';
+          empty.style.visibility = 'hidden';
+          weekEl.appendChild(empty);
+        }
+        
+        week.forEach(day => {
+          const dayEl = document.createElement('div');
+          dayEl.className = 'heatmap-day';
+          dayEl.dataset.level = day.level;
+          dayEl.dataset.tooltip = `${day.date}: ${day.count} posts`;
+          dayEl.dataset.date = day.date;
+          dayEl.dataset.count = day.count;
+          
+          // Add tooltip event handlers
+          dayEl.addEventListener('mouseenter', (e) => showHeatmapTooltip(e, day.date, day.count));
+          dayEl.addEventListener('mouseleave', hideHeatmapTooltip);
+          dayEl.addEventListener('mousemove', (e) => updateHeatmapTooltipPosition(e));
+          
+          weekEl.appendChild(dayEl);
+        });
+        
+        heatmap.appendChild(weekEl);
+      });
+      
+      // Build month labels aligned with week columns
+      // Each week column is 24px (cell width) + 4px (gap) = 28px
+      const weekColumnWidth = 28;
+      const sortedMonths = Array.from(monthPositions.entries()).sort((a, b) => a[1] - b[1]);
+      
+      // Track which weeks have labels
+      let currentWeekIndex = 0;
+      sortedMonths.forEach(([monthName, weekIndex]) => {
+        // Add spacer divs for weeks before this month's first week
+        while (currentWeekIndex < weekIndex) {
+          const spacer = document.createElement('div');
+          spacer.className = 'month-label-spacer';
+          spacer.style.width = `${weekColumnWidth}px`;
+          spacer.style.flexShrink = '0';
+          monthLabels.appendChild(spacer);
+          currentWeekIndex++;
+        }
+        
+        // Calculate how many weeks this month spans (approximate: 4-5 weeks)
+        // For simplicity, span across 4 weeks
+        const monthSpan = 4;
+        const label = document.createElement('div');
+        label.className = 'month-label';
+        label.textContent = monthName;
+        label.style.width = `${weekColumnWidth * monthSpan}px`;
+        label.style.flexShrink = '0';
+        monthLabels.appendChild(label);
+        currentWeekIndex += monthSpan;
+      });
+    }
+    
+    // Heatmap tooltip management
+    let heatmapTooltip = null;
+    
+    function showHeatmapTooltip(event, date, count) {
+      // Remove existing tooltip if any
+      hideHeatmapTooltip();
+      
+      // Create tooltip element
+      heatmapTooltip = document.createElement('div');
+      heatmapTooltip.className = 'heatmap-tooltip-portal';
+      heatmapTooltip.textContent = `${date}: ${count} ${count === 1 ? 'post' : 'posts'}`;
+      document.body.appendChild(heatmapTooltip);
+      
+      // Force reflow to get accurate dimensions
+      heatmapTooltip.offsetHeight;
+      
+      // Position tooltip
+      updateHeatmapTooltipPosition(event);
+    }
+    
+    function updateHeatmapTooltipPosition(event) {
+      if (!heatmapTooltip) return;
+      
+      const cell = event.currentTarget;
+      const cellRect = cell.getBoundingClientRect();
+      const tooltipRect = heatmapTooltip.getBoundingClientRect();
+      
+      // If tooltip hasn't rendered yet, use estimated dimensions
+      const tooltipHeight = tooltipRect.height || 32;
+      const tooltipWidth = tooltipRect.width || 120;
+      
+      // Calculate position above the cell (centered)
+      let top = cellRect.top - tooltipHeight - 8; // 8px gap above cell
+      let left = cellRect.left + (cellRect.width / 2) - (tooltipWidth / 2);
+      
+      // Collision detection: ensure tooltip stays within viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const padding = 10;
+      
+      // Horizontal collision: keep tooltip within viewport
+      if (left < padding) {
+        left = padding;
+      } else if (left + tooltipWidth > viewportWidth - padding) {
+        left = viewportWidth - tooltipWidth - padding;
+      }
+      
+      // Vertical collision: if tooltip would go above viewport, show below cell instead
+      if (top < padding) {
+        top = cellRect.bottom + 8; // Show below cell
+      }
+      
+      // Ensure tooltip doesn't go below viewport
+      if (top + tooltipHeight > viewportHeight - padding) {
+        top = viewportHeight - tooltipHeight - padding;
+      }
+      
+      heatmapTooltip.style.top = `${top}px`;
+      heatmapTooltip.style.left = `${left}px`;
+    }
+    
+    function hideHeatmapTooltip() {
+      if (heatmapTooltip) {
+        heatmapTooltip.remove();
+        heatmapTooltip = null;
+      }
+    }
+    
+    function buildTimeline(byDate, dates) {
+      const chart = document.getElementById('timelineChart');
+      
+      // Clear previous content
+      chart.innerHTML = '';
+      
+      // Debug: Check for duplicates and verify data
+      console.log('=== Timeline Debug ===');
+      console.log('Total dates:', dates.length);
+      console.log('Last 5 dates:', dates.slice(-5));
+      console.log('Last 5 counts:', dates.slice(-5).map(d => byDate[d]));
+      
+      // Check for duplicates
+      const uniqueDates = [...new Set(dates)];
+      if (uniqueDates.length !== dates.length) {
+        console.warn('Duplicate dates found!', dates.length - uniqueDates.length, 'duplicates');
+        const duplicates = dates.filter((d, i) => dates.indexOf(d) !== i);
+        console.warn('Duplicate dates:', duplicates);
+      }
+      
+      // Filter out any invalid dates and ensure we only use dates that exist in byDate
+      const validDates = dates.filter(date => {
+        const exists = date in byDate;
+        if (!exists) {
+          console.warn('Date in array but not in byDate:', date);
+        }
+        return exists && date !== 'Unknown';
+      });
+      
+      console.log('Valid dates after filtering:', validDates.length);
+      console.log('Last 5 valid dates:', validDates.slice(-5));
+      console.log('Last 5 valid counts:', validDates.slice(-5).map(d => byDate[d]));
+      
+      if (validDates.length === 0) {
+        console.warn('No valid dates for timeline');
+        return;
+      }
+      
+      // Calculate maxCount only from valid dates (exclude 'Unknown' and any invalid entries)
+      const counts = validDates.map(d => byDate[d]).filter(c => c != null && !isNaN(c));
+      if (counts.length === 0) {
+        console.warn('No valid counts for timeline');
+        return;
+      }
+      const maxCount = Math.max(...counts);
+      console.log('Max count:', maxCount);
+      console.log('Counts array length:', counts.length, 'Valid dates length:', validDates.length);
+      
+      // Build bars only for valid dates
+      validDates.forEach((date, i) => {
+        const count = byDate[date];
+        if (count === undefined || count === null) {
+          console.warn('Missing count for date:', date);
+          return;
+        }
+        
+        const height = (count / maxCount) * 240;
+        
+        const bar = document.createElement('div');
+        bar.className = 'timeline-bar';
+        bar.style.height = `${height}px`;
+        bar.dataset.tooltip = `${date}: ${count} posts`;
+        bar.dataset.date = date;
+        bar.dataset.count = count;
+        
+        // Add tooltip event handlers
+        bar.addEventListener('mouseenter', (e) => showTimelineTooltip(e, date, count));
+        bar.addEventListener('mouseleave', hideTimelineTooltip);
+        bar.addEventListener('mousemove', (e) => updateTimelineTooltipPosition(e));
+        
+        chart.appendChild(bar);
+      });
+      
+      // Verify bars created
+      const barCount = chart.children.length;
+      console.log('Bars created:', barCount);
+      console.log('=== End Timeline Debug ===');
+    }
+    
+    // Timeline tooltip management
+    let timelineTooltip = null;
+    
+    function showTimelineTooltip(event, date, count) {
+      // Remove existing tooltip if any
+      hideTimelineTooltip();
+      
+      // Create tooltip element
+      timelineTooltip = document.createElement('div');
+      timelineTooltip.className = 'timeline-tooltip-portal';
+      timelineTooltip.textContent = `${date}: ${count} posts`;
+      document.body.appendChild(timelineTooltip);
+      
+      // Force reflow to get accurate dimensions
+      timelineTooltip.offsetHeight;
+      
+      // Position tooltip
+      updateTimelineTooltipPosition(event);
+    }
+    
+    function updateTimelineTooltipPosition(event) {
+      if (!timelineTooltip) return;
+      
+      const bar = event.currentTarget;
+      const barRect = bar.getBoundingClientRect();
+      const tooltipRect = timelineTooltip.getBoundingClientRect();
+      
+      // If tooltip hasn't rendered yet, use estimated dimensions
+      const tooltipHeight = tooltipRect.height || 32;
+      const tooltipWidth = tooltipRect.width || 120;
+      
+      // Calculate position above the bar (centered)
+      let top = barRect.top - tooltipHeight - 8; // 8px gap above bar
+      let left = barRect.left + (barRect.width / 2) - (tooltipWidth / 2);
+      
+      // Collision detection: ensure tooltip stays within viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const padding = 10;
+      
+      // Horizontal collision: keep tooltip within viewport
+      if (left < padding) {
+        left = padding;
+      } else if (left + tooltipWidth > viewportWidth - padding) {
+        left = viewportWidth - tooltipWidth - padding;
+      }
+      
+      // Vertical collision: if tooltip would go above viewport, show below bar instead
+      if (top < padding) {
+        top = barRect.bottom + 8; // Show below bar
+      }
+      
+      // Ensure tooltip doesn't go below viewport
+      if (top + tooltipHeight > viewportHeight - padding) {
+        top = viewportHeight - tooltipHeight - padding;
+      }
+      
+      timelineTooltip.style.top = `${top}px`;
+      timelineTooltip.style.left = `${left}px`;
+    }
+    
+    function hideTimelineTooltip() {
+      if (timelineTooltip) {
+        timelineTooltip.remove();
+        timelineTooltip = null;
+      }
+    }
+    
+    function buildCategoryBars(byCategory, total) {
+      const container = document.getElementById('categoryBars');
+      const sorted = Object.entries(byCategory).sort((a,b) => b[1] - a[1]);
+      const maxCount = sorted[0]?.[1] || 1;
+      
+      sorted.forEach(([cat, count]) => {
+        const width = (count / maxCount) * 100;
+        const row = document.createElement('div');
+        row.className = 'category-row';
+        row.innerHTML = `
+          <span class="label">${cat}</span>
+          <div class="bar-wrapper">
+            <div class="bar" style="width: ${width}%">${count}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+    
+    function buildWeekGrid(byWeek) {
+      const container = document.getElementById('weekGrid');
+      const sorted = Object.entries(byWeek).sort((a,b) => b[0].localeCompare(a[0]));
+      const maxCount = Math.max(...Object.values(byWeek));
+      
+      sorted.slice(0, 8).forEach(([week, count]) => {
+        const width = (count / maxCount) * 100;
+        const card = document.createElement('div');
+        card.className = 'week-card';
+        card.innerHTML = `
+          <h4>
+            Week of ${week}
+            <span class="count">${count}</span>
+          </h4>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${width}%"></div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+    
+    // Tab navigation
+    function initTabs() {
+      const tabItems = document.querySelectorAll('.tab-item');
+      const views = document.querySelectorAll('.dashboard-view');
+      
+      function switchView(viewName) {
+        // Update tab active states
+        tabItems.forEach(tab => {
+          if (tab.dataset.view === viewName) {
+            tab.classList.add('active');
+          } else {
+            tab.classList.remove('active');
+          }
+        });
+        
+        // Hide all views first to prevent layout shifts
+        views.forEach(v => {
+          v.style.display = 'none';
+          v.classList.remove('active');
+        });
+        
+        // Then show the target view with fade transition
+        const targetView = document.getElementById(`view-${viewName}`);
+        if (targetView) {
+          targetView.style.display = 'block';
+          targetView.style.opacity = '0';
+          targetView.classList.add('active');
+          // Trigger reflow
+          targetView.offsetHeight;
+          requestAnimationFrame(() => {
+            targetView.style.opacity = '1';
+          });
+        }
+      }
+      
+      // Tab click handlers
+      tabItems.forEach(item => {
+        item.addEventListener('click', () => {
+          switchView(item.dataset.view);
+        });
+      });
+      
+    }
+    
+    // Load dashboard when page loads
+      if (document.getElementById('dashboard-section')) {
+        loadDashboard();
+        initTabs();
+      }
+  </script>
 </body>
 </html>
 

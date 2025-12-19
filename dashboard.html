@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - EECS182 Extra Credit</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-card: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --green-1: #0e4429;
+      --green-2: #006d32;
+      --green-3: #26a641;
+      --green-4: #39d353;
+    }
+    
+    body {
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .dashboard-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+    }
+    
+    .dashboard-header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .dashboard-nav {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .dashboard-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .dashboard-nav a:hover,
+    .dashboard-nav a.active {
+      color: var(--text);
+      background: var(--bg-dark);
+    }
+    
+    .dashboard-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    
+    .stat-card h3 {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    
+    .stat-card .change {
+      font-size: 0.875rem;
+      color: var(--green-4);
+      margin-top: 0.25rem;
+    }
+    
+    .section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .section-header h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    
+    .section-body {
+      padding: 1.25rem;
+    }
+    
+    /* Heatmap Calendar */
+    .heatmap-container {
+      overflow-x: auto;
+    }
+    
+    .heatmap {
+      display: flex;
+      gap: 3px;
+    }
+    
+    .heatmap-week {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    .heatmap-day {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      background: #161b22;
+      border: 1px solid rgba(27, 31, 35, 0.06);
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .heatmap-day[data-level="0"] { background: #161b22; }
+    .heatmap-day[data-level="1"] { background: var(--green-1); }
+    .heatmap-day[data-level="2"] { background: var(--green-2); }
+    .heatmap-day[data-level="3"] { background: var(--green-3); }
+    .heatmap-day[data-level="4"] { background: var(--green-4); }
+    
+    .heatmap-day:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+      margin-bottom: 4px;
+    }
+    
+    .heatmap-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    
+    .heatmap-legend-item {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+    
+    .month-labels {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+    
+    .month-label {
+      min-width: calc(4 * 15px);
+    }
+    
+    /* Timeline Chart */
+    .timeline-chart {
+      height: 200px;
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      padding: 1rem 0;
+    }
+    
+    .timeline-bar {
+      flex: 1;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      min-width: 20px;
+      max-width: 60px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      position: relative;
+    }
+    
+    .timeline-bar:hover {
+      opacity: 0.8;
+    }
+    
+    .timeline-bar:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 100;
+      margin-bottom: 4px;
+    }
+    
+    .timeline-labels {
+      display: flex;
+      gap: 2px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+    
+    .timeline-labels span {
+      flex: 1;
+      text-align: center;
+      min-width: 20px;
+      max-width: 60px;
+    }
+    
+    /* Week breakdown */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    
+    .week-card {
+      background: var(--bg-dark);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+    }
+    
+    .week-card h4 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.875rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .week-card .count {
+      background: var(--accent);
+      color: white;
+      padding: 0.125rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+    
+    .week-card .bar-container {
+      height: 8px;
+      background: var(--bg-card);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .week-card .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-2), var(--green-4));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    /* Backlog Section */
+    .backlog-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .backlog-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .backlog-item:last-child {
+      border-bottom: none;
+    }
+    
+    .backlog-item .date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      min-width: 80px;
+    }
+    
+    .backlog-item .title {
+      flex: 1;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .backlog-item .category {
+      font-size: 0.7rem;
+      background: var(--bg-dark);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+    
+    /* Category breakdown */
+    .category-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .category-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .category-row .label {
+      min-width: 150px;
+      font-size: 0.875rem;
+    }
+    
+    .category-row .bar-wrapper {
+      flex: 1;
+      height: 24px;
+      background: var(--bg-dark);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .category-row .bar {
+      height: 100%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      padding-left: 0.5rem;
+      font-size: 0.75rem;
+      color: white;
+      transition: width 0.5s ease;
+    }
+    
+    .category-row:nth-child(1) .bar { background: #f97316; }
+    .category-row:nth-child(2) .bar { background: #8b5cf6; }
+    .category-row:nth-child(3) .bar { background: #06b6d4; }
+    .category-row:nth-child(4) .bar { background: #22c55e; }
+    .category-row:nth-child(5) .bar { background: #ec4899; }
+    .category-row:nth-child(6) .bar { background: #eab308; }
+  </style>
+</head>
+<body>
+  <header class="dashboard-header">
+    <h1>📊 EECS182 Submission Dashboard</h1>
+    <p style="color: var(--text-muted); margin: 0;">Post volume analysis and timeline visualization</p>
+    <nav class="dashboard-nav">
+      <a href="index.html">Overview</a>
+      <a href="directory.html">Directory</a>
+      <a href="dashboard.html" class="active">Dashboard</a>
+    </nav>
+  </header>
+
+  <div class="dashboard-content">
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <h3>Total Submissions</h3>
+        <div class="value" id="totalCount">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Date Range</h3>
+        <div class="value" id="dateRange" style="font-size: 1rem;">-</div>
+      </div>
+      <div class="stat-card">
+        <h3>Peak Day</h3>
+        <div class="value" id="peakDay" style="font-size: 1rem;">-</div>
+        <div class="change" id="peakCount"></div>
+      </div>
+      <div class="stat-card">
+        <h3>Avg Per Day</h3>
+        <div class="value" id="avgPerDay">-</div>
+      </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📅 Submission Heatmap</h2>
+      </div>
+      <div class="section-body">
+        <div class="heatmap-container">
+          <div class="month-labels" id="monthLabels"></div>
+          <div class="heatmap" id="heatmap"></div>
+        </div>
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="heatmap-legend-item" style="background: #161b22;"></div>
+          <div class="heatmap-legend-item" style="background: var(--green-1);"></div>
+          <div class="heatmap-legend-item" style="background: var(--green-2);"></div>
+          <div class="heatmap-legend-item" style="background: var(--green-3);"></div>
+          <div class="heatmap-legend-item" style="background: var(--green-4);"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline Bar Chart -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📈 Daily Post Volume</h2>
+      </div>
+      <div class="section-body">
+        <div class="timeline-chart" id="timelineChart"></div>
+        <div class="timeline-labels" id="timelineLabels"></div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+      <!-- Category Breakdown -->
+      <div class="section">
+        <div class="section-header">
+          <h2>📁 Category Breakdown</h2>
+        </div>
+        <div class="section-body">
+          <div class="category-bars" id="categoryBars"></div>
+        </div>
+      </div>
+
+      <!-- Weekly Breakdown -->
+      <div class="section">
+        <div class="section-header">
+          <h2>🗓️ Weekly Breakdown</h2>
+        </div>
+        <div class="section-body">
+          <div class="week-grid" id="weekGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Activity / Backlog -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📋 Recent Submissions (Backlog View)</h2>
+      </div>
+      <div class="section-body">
+        <div class="backlog-list" id="backlogList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadDashboard() {
+      const res = await fetch('./data/articles.json');
+      const data = await res.json();
+      
+      // Process dates
+      const byDate = {};
+      const byCategory = {};
+      const byWeek = {};
+      
+      data.forEach(item => {
+        const date = item.date || 'Unknown';
+        byDate[date] = (byDate[date] || 0) + 1;
+        
+        const cat = item.subcategory || 'Other';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
+        
+        // Week grouping
+        if (date !== 'Unknown') {
+          const d = new Date(date);
+          const weekStart = new Date(d);
+          weekStart.setDate(d.getDate() - d.getDay());
+          const weekKey = weekStart.toISOString().split('T')[0];
+          byWeek[weekKey] = (byWeek[weekKey] || 0) + 1;
+        }
+      });
+      
+      // Stats
+      document.getElementById('totalCount').textContent = data.length;
+      
+      const dates = Object.keys(byDate).filter(d => d !== 'Unknown').sort();
+      if (dates.length) {
+        document.getElementById('dateRange').textContent = `${dates[0]} to ${dates[dates.length-1]}`;
+      }
+      
+      const peakDate = Object.entries(byDate).sort((a,b) => b[1] - a[1])[0];
+      if (peakDate) {
+        document.getElementById('peakDay').textContent = peakDate[0];
+        document.getElementById('peakCount').textContent = `${peakDate[1]} submissions`;
+      }
+      
+      const activeDays = dates.length;
+      document.getElementById('avgPerDay').textContent = activeDays ? (data.length / activeDays).toFixed(1) : '-';
+      
+      // Build Heatmap
+      buildHeatmap(byDate, dates);
+      
+      // Build Timeline
+      buildTimeline(byDate, dates);
+      
+      // Category bars
+      buildCategoryBars(byCategory, data.length);
+      
+      // Week grid
+      buildWeekGrid(byWeek);
+      
+      // Backlog
+      buildBacklog(data);
+    }
+    
+    function buildHeatmap(byDate, dates) {
+      if (!dates.length) return;
+      
+      const heatmap = document.getElementById('heatmap');
+      const monthLabels = document.getElementById('monthLabels');
+      
+      const start = new Date(dates[0]);
+      const end = new Date(dates[dates.length - 1]);
+      
+      // Adjust to start of week
+      start.setDate(start.getDate() - start.getDay());
+      
+      const maxCount = Math.max(...Object.values(byDate));
+      const weeks = [];
+      const months = new Set();
+      
+      let current = new Date(start);
+      let currentWeek = [];
+      
+      while (current <= end || currentWeek.length > 0) {
+        const dateStr = current.toISOString().split('T')[0];
+        const count = byDate[dateStr] || 0;
+        const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / maxCount) * 4));
+        
+        const monthName = current.toLocaleString('default', { month: 'short' });
+        if (current.getDate() <= 7) months.add(monthName);
+        
+        currentWeek.push({
+          date: dateStr,
+          count,
+          level,
+          day: current.getDay()
+        });
+        
+        if (current.getDay() === 6 || current > end) {
+          weeks.push(currentWeek);
+          currentWeek = [];
+        }
+        
+        current.setDate(current.getDate() + 1);
+        if (current > end && currentWeek.length === 0) break;
+      }
+      
+      weeks.forEach(week => {
+        const weekEl = document.createElement('div');
+        weekEl.className = 'heatmap-week';
+        
+        // Fill in missing days at start
+        for (let i = 0; i < week[0].day; i++) {
+          const empty = document.createElement('div');
+          empty.className = 'heatmap-day';
+          empty.style.visibility = 'hidden';
+          weekEl.appendChild(empty);
+        }
+        
+        week.forEach(day => {
+          const dayEl = document.createElement('div');
+          dayEl.className = 'heatmap-day';
+          dayEl.dataset.level = day.level;
+          dayEl.dataset.tooltip = `${day.date}: ${day.count} posts`;
+          weekEl.appendChild(dayEl);
+        });
+        
+        heatmap.appendChild(weekEl);
+      });
+    }
+    
+    function buildTimeline(byDate, dates) {
+      const chart = document.getElementById('timelineChart');
+      const labels = document.getElementById('timelineLabels');
+      
+      const maxCount = Math.max(...Object.values(byDate));
+      
+      dates.forEach((date, i) => {
+        const count = byDate[date];
+        const height = (count / maxCount) * 180;
+        
+        const bar = document.createElement('div');
+        bar.className = 'timeline-bar';
+        bar.style.height = `${height}px`;
+        bar.dataset.tooltip = `${date}: ${count} posts`;
+        chart.appendChild(bar);
+        
+        // Only show some labels
+        if (i % Math.ceil(dates.length / 10) === 0 || i === dates.length - 1) {
+          const label = document.createElement('span');
+          label.textContent = date.slice(5); // MM-DD
+          labels.appendChild(label);
+        }
+      });
+    }
+    
+    function buildCategoryBars(byCategory, total) {
+      const container = document.getElementById('categoryBars');
+      const sorted = Object.entries(byCategory).sort((a,b) => b[1] - a[1]);
+      const maxCount = sorted[0]?.[1] || 1;
+      
+      sorted.forEach(([cat, count]) => {
+        const width = (count / maxCount) * 100;
+        const row = document.createElement('div');
+        row.className = 'category-row';
+        row.innerHTML = `
+          <span class="label">${cat}</span>
+          <div class="bar-wrapper">
+            <div class="bar" style="width: ${width}%">${count}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+    
+    function buildWeekGrid(byWeek) {
+      const container = document.getElementById('weekGrid');
+      const sorted = Object.entries(byWeek).sort((a,b) => b[0].localeCompare(a[0]));
+      const maxCount = Math.max(...Object.values(byWeek));
+      
+      sorted.slice(0, 8).forEach(([week, count]) => {
+        const width = (count / maxCount) * 100;
+        const card = document.createElement('div');
+        card.className = 'week-card';
+        card.innerHTML = `
+          <h4>
+            Week of ${week}
+            <span class="count">${count}</span>
+          </h4>
+          <div class="bar-container">
+            <div class="bar-fill" style="width: ${width}%"></div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+    
+    function buildBacklog(data) {
+      const container = document.getElementById('backlogList');
+      const sorted = [...data].sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+      
+      sorted.slice(0, 50).forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'backlog-item';
+        row.innerHTML = `
+          <span class="date">${item.date || 'Unknown'}</span>
+          <span class="title">${item.title || 'Untitled'}</span>
+          <span class="category">${item.subcategory || 'Other'}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+    
+    loadDashboard();
+  </script>
+</body>
+</html>
+

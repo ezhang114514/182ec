@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(ED_API_TOKEN='pq9uwR.DpVAoXrpjSLYgIJ4I6jtDubsST5Oas6zRql2nzg7' python test_api.py:*)",
+      "Bash(ED_API_TOKEN='pq9uwR.DpVAoXrpjSLYgIJ4I6jtDubsST5Oas6zRql2nzg7' python scrape_ed.py:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(ED_API_TOKEN='pq9uwR.DpVAoXrpjSLYgIJ4I6jtDubsST5Oas6zRql2nzg7' python:*)",
+      "Bash(python:*)",
+      "Bash(cat:*)",
+      "Bash(test:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill /F /PID 9592)",
+      "Bash(taskkill /F /PID 16804)",
+      "Bash(taskkill:*)",
+      "Bash(powershell \"Stop-Process -Id 9592,16804,19420 -Force\")",
+      "Bash(findstr :8000)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

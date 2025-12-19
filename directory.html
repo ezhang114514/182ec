@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en" class="page-directory">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Directory - EECS182 Extra Credit Digest</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <script src="./js/similarPosts.js"></script>
+  <script defer type="module" src="./js/main.js"></script>
+  <!-- MathJax for LaTeX rendering -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    };
+  </script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body class="page-directory">
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand__mark" aria-hidden="true"></div>
+        <div class="brand__text">
+          <div class="brand__title">COMPSCI C182</div>
+          <div class="brand__sub"></div>
+        </div>
+      </div>
+
+      <nav class="topnav" aria-label="Primary">
+        <a href="index.html" class="topnav__link">Overview</a>
+        <a href="directory.html" class="topnav__link is-active">Directory</a>
+      </nav>
+
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <main id="content" class="page">
+    <div class="directory-layout">
+      <!-- Left Sidebar: Filters -->
+      <aside class="directory-sidebar">
+        <div class="sidebar-search">
+          <label class="search">
+            <span class="sr-only">Search</span>
+            <input id="searchInput" type="search" placeholder="Search posts…" />
+          </label>
+        </div>
+
+        <div class="filter-section">
+          <h3 class="filter-section__title">Categories</h3>
+          <div id="categoryFilters" class="filter-list"></div>
+        </div>
+
+        <div class="filter-section">
+          <h3 class="filter-section__title">Course Concepts</h3>
+          <div id="tagFilters" class="filter-list filter-list--scrollable"></div>
+          <button id="clearFilters" class="clear-filters-btn" style="display: none;">Clear filters</button>
+        </div>
+      </aside>
+
+      <!-- Right Main Area: Results -->
+      <div class="directory-main">
+        <div class="section-head">
+          <h1 class="section-title">Special Participation E</h1>
+          <div class="section-controls">
+            <div class="section-sub" id="resultsMeta"></div>
+            <div id="activeFilter" class="active-filter" style="display: none;"></div>
+            <select id="sortSelect" class="sort-select">
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="student">By Student</option>
+              <option value="title">By Title</option>
+              <option value="attachments">Most Attachments</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="feed" class="results-list" aria-live="polite"></div>
+        
+        <div id="emptyState" class="empty-state" style="display: none;">
+          <p>No posts match these filters.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- READER MODAL -->
+  <dialog id="reader" class="reader">
+    <form method="dialog" class="reader__close">
+      <button class="btn btn--ghost close-icon-btn" aria-label="Close">×</button>
+    </form>
+
+    <article class="reader__article">
+      <div class="article-detail-layout">
+        <!-- Left Column: Metadata (Sticky) -->
+        <aside class="article-metadata">
+          <h1 id="rTitle" class="article-title"></h1>
+          
+          <div class="metadata-section">
+            <div class="metadata-row">
+              <span class="metadata-label">Author</span>
+              <span id="rAuthor" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Date</span>
+              <span id="rDate" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row">
+              <span class="metadata-label">Category</span>
+              <span id="rCategory" class="metadata-value"></span>
+            </div>
+            <div class="metadata-row" id="rTagsRow" style="display: none;">
+              <span class="metadata-label">Tags</span>
+              <div id="rTags" class="metadata-tags"></div>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button class="action-btn" id="backBtn" onclick="window.history.back()">
+              ← Back to list
+            </button>
+            <div id="rLinks" class="action-links"></div>
+            <button class="action-btn" id="copyLinkBtn">
+              📋 Copy link
+            </button>
+          </div>
+        </aside>
+
+        <!-- Right Column: Accordion Sections -->
+        <div class="article-content">
+          <div class="accordion-section" data-section="overview">
+            <button class="accordion-header" aria-expanded="false">
+              <span>Overview</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content" id="rOverview"></div>
+          </div>
+
+          <div class="accordion-section" data-section="content">
+            <button class="accordion-header" aria-expanded="true">
+              <span>Full Content</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content active" id="rBody"></div>
+          </div>
+
+          <div class="accordion-section" data-section="attachments" id="rAttachmentsSection" style="display: none;">
+            <button class="accordion-header" aria-expanded="false">
+              <span>Attachments</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content" id="rAttachments"></div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </dialog>
+</body>
+</html>
+
