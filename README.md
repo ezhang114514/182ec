@@ -277,4 +277,4 @@ Course project for EECS182 Fall 2025.
 
 ---
 
-**Built with AI assistance** | *Red Team - Special Participation E*
+**Built with AI assistance** | *Blue Team - Special Participation E*
