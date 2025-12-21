@@ -62,20 +62,20 @@ This website displays **242 Special Participation E** submissions from EECS182, 
 ### Quick Start
 
 **Option 1: One-Click Launch (Windows)**
-```bash
+   ```bash
 # Double-click one of these:
 start.bat          # Full setup with options
 quick-start.bat    # Quick launch
 update-data.bat    # Update data only
-```
+   ```
 
 **Option 2: Manual Launch**
-```bash
+   ```bash
 # Navigate to project directory
 cd my-static-website
 
 # Start local server
-python -m http.server 8000
+   python -m http.server 8000
 
 # Open in browser
 # http://localhost:8000
@@ -277,4 +277,4 @@ Course project for EECS182 Fall 2025.
 
 ---
 
-**Built with AI assistance** | *Blue Team - Special Participation E*
+**Built with AI assistance** | *Red Team - Special Participation E*

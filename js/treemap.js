@@ -25,9 +25,24 @@ function escAttr(s) {
   return esc(s).replaceAll('"', "&quot;");
 }
 
+// Weight bucket function: maps count to one of 4 buckets and returns glow color
+function getWeightBucket(count, minCount, maxCount) {
+  const range = maxCount - minCount;
+  if (range === 0) return { bucket: 1, glow: 'rgba(150, 150, 150, 0.15)' };
+  
+  const ratio = (count - minCount) / range;
+  if (ratio >= 0.75) return { bucket: 4, glow: 'rgba(11, 87, 208, 0.18)' };      // Highest
+  if (ratio >= 0.5) return { bucket: 3, glow: 'rgba(50, 120, 255, 0.16)' };
+  if (ratio >= 0.25) return { bucket: 2, glow: 'rgba(100, 150, 200, 0.14)' };
+  return { bucket: 1, glow: 'rgba(150, 150, 150, 0.12)' };                        // Lowest
+}
+
 function buildTagMap(articles) {
   const container = document.getElementById('tagMap');
   if (!container) return;
+  
+  // Track hovered tile ID for spotlight effect
+  let hoveredTileId = null;
   
   // Count tag frequencies
   const tagCounts = new Map();
@@ -51,6 +66,11 @@ function buildTagMap(articles) {
       value: Math.sqrt(count) // Square root scale: preserves more size differences than log
     }))
     .sort((a, b) => b.count - a.count);
+  
+  // Calculate min/max for weight buckets
+  const counts = tagItems.map(item => item.count);
+  const minCount = Math.min(...counts);
+  const maxCount = Math.max(...counts);
   
   // Get container dimensions
   const updateTreemap = () => {
@@ -113,16 +133,12 @@ function buildTagMap(articles) {
       });
     });
     
-    // Calculate color tier based on count
-    const maxCount = Math.max(...rectangles.map(r => r.count));
-    const getColorTier = (count) => {
-      const ratio = count / maxCount;
-      if (ratio >= 0.8) return 'tier-5'; // Highest
-      if (ratio >= 0.6) return 'tier-4';
-      if (ratio >= 0.4) return 'tier-3';
-      if (ratio >= 0.2) return 'tier-2';
-      return 'tier-1'; // Lowest
-    };
+    // Calculate weight bucket and glow color for each rectangle
+    rectangles.forEach(rect => {
+      const weightData = getWeightBucket(rect.count, minCount, maxCount);
+      rect.weightBucket = weightData.bucket;
+      rect.glowColor = weightData.glow;
+    });
     
     // Render rectangles with staggered animation
     container.style.height = `${height}px`;
@@ -130,7 +146,7 @@ function buildTagMap(articles) {
     container.innerHTML = rectangles.map((rect, index) => {
       const escapedTag = esc(rect.tag);
       const escapedTagAttr = escAttr(rect.tag);
-      const colorTier = getColorTier(rect.count);
+      const tileId = `tile-${index}`;
       const animationDelay = index * 15; // Stagger by 15ms per tile
       
       // For very small tiles, hide count
@@ -138,8 +154,9 @@ function buildTagMap(articles) {
       
       return `
         <div 
-          class="tag-map-tile ${colorTier}" 
-          style="position: absolute; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px; animation-delay: ${animationDelay}ms;"
+          class="tag-map-tile weight-bucket-${rect.weightBucket}" 
+          id="${tileId}"
+          style="position: absolute; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px; animation-delay: ${animationDelay}ms; --glow-color: ${rect.glowColor};"
           data-tag="${escapedTagAttr}"
           data-count="${rect.count}"
           data-tag-name="${escapedTagAttr}"
@@ -162,16 +179,21 @@ function buildTagMap(articles) {
     
     // Add hover and click handlers
     container.querySelectorAll('.tag-map-tile').forEach((tile, index) => {
-      // Hover spotlight effect
+      const tileId = tile.id;
+      
+      // Hover spotlight effect with state tracking
       tile.addEventListener('mouseenter', (e) => {
-        // Dim all other tiles
+        hoveredTileId = tileId;
+        
+        // Update all tiles based on hover state
         container.querySelectorAll('.tag-map-tile').forEach(t => {
-          if (t !== tile) {
+          if (t.id !== tileId) {
             t.classList.add('dimmed');
+          } else {
+            t.classList.add('hovered');
+            t.classList.remove('dimmed');
           }
         });
-        // Brighten hovered tile
-        tile.classList.add('hovered');
         
         // Show tooltip
         const tagName = tile.dataset.tagName;
@@ -180,6 +202,8 @@ function buildTagMap(articles) {
       });
       
       tile.addEventListener('mouseleave', () => {
+        hoveredTileId = null;
+        
         // Restore all tiles
         container.querySelectorAll('.tag-map-tile').forEach(t => {
           t.classList.remove('dimmed', 'hovered');
@@ -296,19 +320,36 @@ function buildTagMap(articles) {
       }
     }
     
+    // Calculate weight buckets for fallback layout
+    const fallbackCounts = rectangles.map(r => r.count);
+    const fallbackMinCount = Math.min(...fallbackCounts);
+    const fallbackMaxCount = Math.max(...fallbackCounts);
+    rectangles.forEach(rect => {
+      const weightData = getWeightBucket(rect.count, fallbackMinCount, fallbackMaxCount);
+      rect.weightBucket = weightData.bucket;
+      rect.glowColor = weightData.glow;
+    });
+    
+    // Track hovered tile ID for spotlight effect (fallback)
+    let fallbackHoveredTileId = null;
+    
     // Render
     container.style.height = `${height}px`;
     container.style.position = 'relative';
-    container.innerHTML = rectangles.map(rect => {
+    container.innerHTML = rectangles.map((rect, index) => {
       const escapedTag = esc(rect.tag);
       const escapedTagAttr = escAttr(rect.tag);
+      const tileId = `tile-fallback-${index}`;
       const showCount = rect.width >= 80 && rect.height >= 50;
       
       return `
         <div 
-          class="tag-map-tile" 
-          style="position: absolute; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px;"
+          class="tag-map-tile weight-bucket-${rect.weightBucket}" 
+          id="${tileId}"
+          style="position: absolute; left: ${rect.x}px; top: ${rect.y}px; width: ${rect.width}px; height: ${rect.height}px; --glow-color: ${rect.glowColor};"
           data-tag="${escapedTagAttr}"
+          data-count="${rect.count}"
+          data-tag-name="${escapedTagAttr}"
           title="${escapedTag} (${rect.count} posts)"
         >
           <span class="tag-map-label">${escapedTag}</span>
@@ -317,8 +358,29 @@ function buildTagMap(articles) {
       `;
     }).join('');
     
-    // Add click handlers
+    // Add hover and click handlers (fallback)
     container.querySelectorAll('.tag-map-tile').forEach(tile => {
+      const tileId = tile.id;
+      
+      tile.addEventListener('mouseenter', () => {
+        fallbackHoveredTileId = tileId;
+        container.querySelectorAll('.tag-map-tile').forEach(t => {
+          if (t.id !== tileId) {
+            t.classList.add('dimmed');
+          } else {
+            t.classList.add('hovered');
+            t.classList.remove('dimmed');
+          }
+        });
+      });
+      
+      tile.addEventListener('mouseleave', () => {
+        fallbackHoveredTileId = null;
+        container.querySelectorAll('.tag-map-tile').forEach(t => {
+          t.classList.remove('dimmed', 'hovered');
+        });
+      });
+      
       tile.addEventListener('click', () => {
         const tag = tile.dataset.tag;
         window.location.href = `directory.html?tag=${encodeURIComponent(tag)}`;

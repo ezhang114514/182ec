@@ -1112,6 +1112,7 @@ html:has(.page-directory),
   color: var(--muted);
 }
 
+/* Grain texture SVG (inline data URL) */
 .tag-map-tile {
   position: absolute;
   display: flex;
@@ -1120,16 +1121,82 @@ html:has(.page-directory),
   justify-content: center;
   padding: 10px 12px;
   background: #1a1a1a;
-  border: 1px solid #333;
+  border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+              filter 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.22s ease,
+              background 0.24s ease;
   overflow: hidden;
   box-sizing: border-box;
   z-index: 1;
   opacity: 0;
   transform: scale(0.8);
   animation: tileEntrance 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  
+  /* Layered shadows: ambient + inset highlight */
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  
+  /* Micro-texture grain overlay */
+  background-image: 
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E"),
+    #1a1a1a;
+  
+  /* Premium rim-light border using ::before */
+  position: relative;
+}
+
+.tag-map-tile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 6px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(200, 200, 200, 0.08) 25%,
+    rgba(150, 150, 150, 0.05) 50%,
+    rgba(200, 200, 200, 0.08) 75%,
+    rgba(255, 255, 255, 0.15) 100%
+  );
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: 
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.3;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+}
+
+.tag-map-tile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 60%;
+  border-radius: 6px 0 50% 0;
+  background: radial-gradient(
+    circle at 20% 20%,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 30%,
+    transparent 70%
+  );
+  pointer-events: none;
+  opacity: 0.08;
+  transition: opacity 0.24s ease;
 }
 
 @keyframes tileEntrance {
@@ -1140,22 +1207,55 @@ html:has(.page-directory),
 }
 
 .tag-map-tile.dimmed {
-  opacity: 0.35;
-  transition: opacity 0.2s ease;
+  opacity: 0.55;
+  transition: opacity 0.22s ease;
 }
 
 .tag-map-tile.hovered {
-  background: rgba(11, 87, 208, 0.25);
-  border-color: rgba(11, 87, 208, 0.6);
-  box-shadow: 0 6px 20px rgba(11, 87, 208, 0.4);
-  transform: translateY(-4px) scale(1.03);
+  /* Lift and 3D tilt */
+  transform: translateY(-4px) scale(1.03) rotateX(1.5deg) rotateY(-1.5deg);
   z-index: 10;
   opacity: 1 !important;
+  
+  /* Light up effect: brighter background */
+  background: #2a2a2a !important;
+  filter: brightness(1.4);
+  
+  /* Stronger glow ring for light-up effect */
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.6),
+    0 0 0 8px var(--glow-color, rgba(200, 200, 200, 0.4)),
+    0 0 20px rgba(255, 255, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.tag-map-tile.hovered::before {
+  opacity: 1;
+  /* Brighter rim-light border */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.2) 25%,
+    rgba(200, 200, 200, 0.15) 50%,
+    rgba(255, 255, 255, 0.2) 75%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+}
+
+.tag-map-tile.hovered::after {
+  opacity: 0.25;
+  /* Brighter specular highlight */
+  background: radial-gradient(
+    circle at 20% 20%,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.15) 30%,
+    transparent 70%
+  );
 }
 
 
 .tag-map-tile.pressed {
-  transform: translateY(-2px) scale(0.98);
+  transform: translateY(-2px) scale(0.98) rotateX(0.5deg) rotateY(-0.5deg);
 }
 
 .tag-map-tile.clicked {
@@ -1163,50 +1263,21 @@ html:has(.page-directory),
   opacity: 0.8;
 }
 
-/* Color encoding tiers */
-.tag-map-tile.tier-1 {
-  border-color: #444;
-  box-shadow: 0 0 0 1px rgba(100, 100, 100, 0.1);
+/* Weight bucket glow colors (subtle by default, enhanced on hover via --glow-color) */
+.tag-map-tile.weight-bucket-1 {
+  --glow-color: rgba(150, 150, 150, 0.12);
 }
 
-.tag-map-tile.tier-2 {
-  border-color: #555;
-  box-shadow: 0 0 0 1px rgba(100, 150, 200, 0.15);
+.tag-map-tile.weight-bucket-2 {
+  --glow-color: rgba(100, 150, 200, 0.14);
 }
 
-.tag-map-tile.tier-3 {
-  border-color: #666;
-  box-shadow: 0 0 0 1px rgba(100, 150, 255, 0.2);
+.tag-map-tile.weight-bucket-3 {
+  --glow-color: rgba(50, 120, 255, 0.16);
 }
 
-.tag-map-tile.tier-4 {
-  border-color: #777;
-  box-shadow: 0 0 0 1px rgba(50, 120, 255, 0.25);
-}
-
-.tag-map-tile.tier-5 {
-  border-color: #888;
-  box-shadow: 0 0 0 1px rgba(11, 87, 208, 0.3);
-}
-
-.tag-map-tile.hovered.tier-1 {
-  box-shadow: 0 6px 20px rgba(100, 100, 100, 0.3);
-}
-
-.tag-map-tile.hovered.tier-2 {
-  box-shadow: 0 6px 20px rgba(100, 150, 200, 0.35);
-}
-
-.tag-map-tile.hovered.tier-3 {
-  box-shadow: 0 6px 20px rgba(100, 150, 255, 0.4);
-}
-
-.tag-map-tile.hovered.tier-4 {
-  box-shadow: 0 6px 20px rgba(50, 120, 255, 0.45);
-}
-
-.tag-map-tile.hovered.tier-5 {
-  box-shadow: 0 6px 20px rgba(11, 87, 208, 0.5);
+.tag-map-tile.weight-bucket-4 {
+  --glow-color: rgba(11, 87, 208, 0.18);
 }
 
 .tag-map-icon {
@@ -1234,6 +1305,8 @@ html:has(.page-directory),
   text-overflow: ellipsis;
   max-width: 100%;
   max-height: calc(1.3em * 2);
+  position: relative;
+  z-index: 2;
 }
 
 .tag-map-count {
@@ -1243,6 +1316,8 @@ html:has(.page-directory),
   text-align: center;
   flex-shrink: 0;
   line-height: 1;
+  position: relative;
+  z-index: 2;
 }
 
 /* Responsive adjustments for tag map */
@@ -1338,6 +1413,13 @@ html:has(.page-directory),
   box-sizing: border-box;
 }
 
+/* Carousel wrapper for gradient fades */
+.categories-section__carousel-wrapper {
+  position: relative;
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
 .categories-heading {
   font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
   font-size: 28px;
@@ -1362,13 +1444,99 @@ html:has(.page-directory),
   display: flex;
   gap: 24px;
   overflow-x: auto;
-  padding: 20px 20px 40px;
+  /* REQUIREMENT 1: Show partial peek of next card */
+  padding: 20px 60px 40px;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   width: 100%;
   box-sizing: border-box;
+  position: relative;
+  /* REQUIREMENT 4: Nudge animation on first load (only if scrollable) */
+  /* Animation will be applied via class if carousel is scrollable */
+}
+
+.category-carousel.scrollable {
+  animation: carouselNudge 1.2s ease-out 0.5s;
+}
+
+/* REQUIREMENT 4: Gentle nudge animation to hint scrolling */
+@keyframes carouselNudge {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  30% {
+    transform: translateX(20px);
+  }
+  60% {
+    transform: translateX(0);
+  }
+}
+
+/* REQUIREMENT 2: Gradient edge fades to imply overflow */
+.categories-section__carousel-wrapper::before,
+.categories-section__carousel-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 60px; /* Leave space for progress bar */
+  width: 80px;
+  pointer-events: none;
+  z-index: 3; /* Above carousel content */
+  transition: opacity 0.3s ease;
+}
+
+.categories-section__carousel-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.7) 30%, transparent 100%);
+}
+
+.categories-section__carousel-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.7) 30%, transparent 100%);
+}
+
+/* Hide left fade when scrolled to start */
+.categories-section__carousel-wrapper.scrolled-start::before {
+  opacity: 0;
+}
+
+/* Hide right fade when scrolled to end */
+.categories-section__carousel-wrapper.scrolled-end::after {
+  opacity: 0;
+}
+
+/* REQUIREMENT 3: Dots indicator */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  padding: 0 60px;
+}
+
+.carousel-dots__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.carousel-dots__dot.active {
+  background: rgba(255, 255, 255, 0.8);
+  width: 24px;
+  border-radius: 3px;
+}
+
+.carousel-dots__dot:hover {
+  background: rgba(255, 255, 255, 0.6);
 }
 
 .category-carousel::-webkit-scrollbar {
@@ -1404,6 +1572,8 @@ html:has(.page-directory),
   scroll-snap-align: start;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  /* REQUIREMENT 1: Ensure partial visibility for peek effect */
+  margin-right: 0;
 }
 
 .category-card:hover {
@@ -1471,6 +1641,19 @@ html:has(.page-directory),
   
   .categories-heading {
     margin-bottom: 40px;
+  }
+  
+  .category-carousel {
+    padding: 20px 40px 40px;
+  }
+  
+  .categories-section__carousel-wrapper::before,
+  .categories-section__carousel-wrapper::after {
+    width: 40px;
+  }
+  
+  .carousel-dots {
+    padding: 0 40px;
   }
   
   .category-card {

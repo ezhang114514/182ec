@@ -26,8 +26,8 @@ function matches(a){
 
   // Category filter (for overview page)
   if (!isDirectoryPage()) {
-    const catOk = state.filterCat === "all" || a.category === state.filterCat;
-    if (!catOk) return false;
+  const catOk = state.filterCat === "all" || a.category === state.filterCat;
+  if (!catOk) return false;
   }
 
   // Subcategory filter (categories in catalog layout)
@@ -121,7 +121,7 @@ function render(){
   const feed = $("#feed");
   const emptyState = $("#emptyState");
   if (feed) {
-    feed.innerHTML = "";
+  feed.innerHTML = "";
 
     if (sorted.length === 0) {
       if (emptyState) emptyState.style.display = "block";
@@ -129,7 +129,7 @@ function render(){
       if (emptyState) emptyState.style.display = "none";
       
       for (const a of sorted) {
-        const el = document.createElement("article");
+    const el = document.createElement("article");
         el.className = "result-item";
 
         // Build preview text - use summary if available, otherwise dek, otherwise truncated body
@@ -150,8 +150,8 @@ function render(){
           ? `<div class="result-item__tags">${a.tags.map(tag => `<span class="article-tag">${esc(tag)}</span>`).join('')}</div>`
           : '<div class="result-item__tags"></div>';
 
-        // Attachment indicator
-        const attachmentBadge = a.attachments?.length
+    // Attachment indicator
+    const attachmentBadge = a.attachments?.length
           ? `<div class="result-item__attachment-badge">📎 ${a.attachments.length} file${a.attachments.length > 1 ? 's' : ''}</div>`
           : '';
 
@@ -176,20 +176,20 @@ function render(){
           }
         }
 
-        el.innerHTML = `
+    el.innerHTML = `
           <h2 class="result-item__title">
-            <a href="#" data-open="${escAttr(a.id)}">${esc(a.title || "")}</a>
+        <a href="#" data-open="${escAttr(a.id)}">${esc(a.title || "")}</a>
           </h2>
           <p class="result-item__preview">${esc(preview)}</p>
           <div class="result-item__meta">${esc(fmtMeta(a))}</div>
           <div class="result-item__footer">
             ${tagsHTML}
-            ${attachmentBadge}
+        ${attachmentBadge}
           </div>
           ${similarHTML}
-        `;
+    `;
 
-        feed.appendChild(el);
+    feed.appendChild(el);
         
         // Render LaTeX/MathJax in preview text after element is added
         const previewEl = el.querySelector('.result-item__preview');
@@ -228,8 +228,8 @@ function setHero(a){
   if (heroDek) heroDek.textContent = a.dek || "";
   if (heroMeta) heroMeta.textContent = fmtMeta(a);
   if (btn) {
-    btn.disabled = false;
-    btn.onclick = () => openReader(a.id);
+  btn.disabled = false;
+  btn.onclick = () => openReader(a.id);
   }
 }
 
@@ -303,7 +303,7 @@ function openReader(id){
 
   // Full content section
   $("#rBody").innerHTML = a.body_html || `<p>${esc(a.dek || "No content available.")}</p>`;
-  
+
   // Render LaTeX/MathJax after content is loaded
   renderMathJax($("#rBody"));
 
@@ -785,6 +785,131 @@ function buildCategoriesCarousel(all) {
       </div>
     `;
   }).join("");
+  
+  // REQUIREMENT 2 & 3: Add scroll tracking for gradient fades and dots indicator
+  const wrapper = container.closest('.categories-section__carousel-wrapper');
+  if (wrapper) {
+    const dotsContainer = document.getElementById('carouselDots');
+    
+    // Calculate number of visible cards and create dots
+    let numDots = 1;
+    const cardWidth = 280; // Match CSS flex: 0 0 280px
+    const gap = 24; // Match CSS gap: 24px
+    const totalCards = container.children.length;
+    
+    const createDots = () => {
+      if (!dotsContainer) return;
+      
+      const containerWidth = container.clientWidth;
+      const cardsPerView = Math.floor((containerWidth - 120) / (cardWidth + gap)); // Account for padding
+      numDots = Math.max(1, Math.ceil(totalCards / Math.max(1, cardsPerView)));
+      
+      // Create dots if carousel is scrollable
+      if (container.scrollWidth > container.clientWidth && numDots > 1) {
+        dotsContainer.innerHTML = '';
+        dotsContainer.style.display = 'flex';
+        for (let i = 0; i < numDots; i++) {
+          const dot = document.createElement('button');
+          dot.className = 'carousel-dots__dot';
+          dot.setAttribute('role', 'tab');
+          dot.setAttribute('aria-label', `Go to page ${i + 1}`);
+          dot.setAttribute('aria-selected', 'false');
+          if (i === 0) {
+            dot.classList.add('active');
+            dot.setAttribute('aria-selected', 'true');
+          }
+          
+          // Click handler to scroll to that section
+          dot.addEventListener('click', () => {
+            const maxScroll = container.scrollWidth - container.clientWidth;
+            const scrollPosition = numDots > 1 ? (i / (numDots - 1)) * maxScroll : 0;
+            container.scrollTo({
+              left: scrollPosition,
+              behavior: 'smooth'
+            });
+          });
+          
+          dotsContainer.appendChild(dot);
+        }
+      } else {
+        // Hide dots if not scrollable
+        dotsContainer.style.display = 'none';
+      }
+    };
+    
+    // Create dots initially
+    createDots();
+    
+    const updateCarouselState = () => {
+      const scrollLeft = container.scrollLeft;
+      const scrollWidth = container.scrollWidth;
+      const clientWidth = container.clientWidth;
+      const maxScroll = scrollWidth - clientWidth;
+      
+      // Update gradient fade visibility
+      if (scrollLeft <= 5) {
+        wrapper.classList.add('scrolled-start');
+        wrapper.classList.remove('scrolled-end');
+      } else if (scrollLeft >= maxScroll - 5) {
+        wrapper.classList.add('scrolled-end');
+        wrapper.classList.remove('scrolled-start');
+      } else {
+        wrapper.classList.remove('scrolled-start', 'scrolled-end');
+      }
+      
+      // Update active dot
+      if (dotsContainer && numDots > 1) {
+        const dots = dotsContainer.querySelectorAll('.carousel-dots__dot');
+        if (dots.length > 0) {
+          const currentDotIndex = Math.min(
+            Math.floor((scrollLeft / maxScroll) * (numDots - 1)),
+            numDots - 1
+          );
+          
+          dots.forEach((dot, index) => {
+            if (index === currentDotIndex) {
+              dot.classList.add('active');
+              dot.setAttribute('aria-selected', 'true');
+            } else {
+              dot.classList.remove('active');
+              dot.setAttribute('aria-selected', 'false');
+            }
+          });
+        }
+      }
+    };
+    
+    // Initial state
+    updateCarouselState();
+    
+    // Update on scroll
+    container.addEventListener('scroll', updateCarouselState);
+    
+    // Update on resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        createDots(); // Recreate dots on resize
+        updateCarouselState();
+      }, 100);
+    });
+  }
+  
+  // REQUIREMENT 4: One-time nudge animation (only if carousel is scrollable)
+  const checkAndNudge = () => {
+    if (container.scrollWidth > container.clientWidth) {
+      // Carousel is scrollable, add class to trigger nudge animation
+      container.classList.add('scrollable');
+      // Remove class after animation completes to prevent replay
+      setTimeout(() => {
+        container.classList.remove('scrollable');
+      }, 2000);
+    }
+  };
+  
+  // Check after a brief delay to ensure layout is complete
+  setTimeout(checkAndNudge, 100);
 }
 
 function wireUI(){

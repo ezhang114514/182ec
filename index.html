@@ -63,7 +63,10 @@
     <!-- Categories Carousel Section -->
     <section class="categories-section">
       <h2 class="categories-heading">CATEGORIES</h2>
-      <div id="categoriesCarousel" class="category-carousel" aria-label="Browse by category"></div>
+      <div class="categories-section__carousel-wrapper">
+        <div id="categoriesCarousel" class="category-carousel" aria-label="Browse by category"></div>
+        <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Carousel pages"></div>
+      </div>
     </section>
 
     <!-- Dashboard Section -->
@@ -104,8 +107,8 @@
                   <h3>Avg Per Day</h3>
                   <div class="value" id="avgPerDay">-</div>
                 </div>
-              </div>
-            </div>
+          </div>
+        </div>
 
             <!-- Heatmap View -->
             <div class="dashboard-view" id="view-heatmap">
@@ -114,7 +117,7 @@
               <div class="heatmap-container">
                 <div class="month-labels" id="monthLabels"></div>
                 <div class="heatmap" id="heatmap"></div>
-              </div>
+        </div>
               <div class="heatmap-legend">
                 <span>Less</span>
                 <div class="heatmap-legend-item" style="background: #161b22;"></div>
@@ -123,8 +126,8 @@
                 <div class="heatmap-legend-item" style="background: #26a641;"></div>
                 <div class="heatmap-legend-item" style="background: #39d353;"></div>
                 <span>More</span>
-              </div>
-            </div>
+      </div>
+        </div>
 
             <!-- Timeline View -->
             <div class="dashboard-view" id="view-timeline">
@@ -148,7 +151,7 @@
             </div>
           </div>
         </div>
-      </div>
+        </div>
     </section>
   </main>
 
