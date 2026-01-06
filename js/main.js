@@ -108,8 +108,13 @@ function render(){
       activeFilter.innerHTML = `
         <span class="active-filter__label">Active filter:</span>
         <span class="active-filter__tag">${esc(tag)}</span>
-        <button class="active-filter__clear" onclick="clearTagFilter()">×</button>
+        <button class="active-filter__clear">×</button>
       `;
+      // Attach click handler to the clear button
+      const clearBtn = activeFilter.querySelector('.active-filter__clear');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', clearTagFilter);
+      }
     } else {
       activeFilter.style.display = 'none';
     }
@@ -709,6 +714,111 @@ function buildTagChips(all){
   });
 }
 
+function buildFeaturedCarousel(all) {
+  const track = $("#featuredCarousel");
+  if (!track) return;
+
+  // Featured post IDs (in order from the image)
+  const featuredIds = [
+    "ed-7363141", // Jason Trinh - AI Assisted Annotations
+    "ed-7406979", // Elizabeth Weaver - Socratic Tutor
+    "ed-7392001", // Mihir Rao - Gemini + Manim
+    "ed-7389324", // Ken Zheng - Enhanced Lecture to Note Transcription Pipeline
+  ];
+
+  // Find the featured posts
+  const featuredPosts = featuredIds.map(id => all.find(a => a.id === id)).filter(Boolean);
+
+  // Build slides (one post per slide)
+  track.innerHTML = featuredPosts.map((post, index) => {
+    const edLink = post.links?.ed || '#';
+    const title = post.title || "Untitled";
+    const author = post.student || "Anonymous";
+    const category = post.subcategory || "Other";
+    const description = post.dek || post.summary || "No description available.";
+    
+    return `
+      <div class="featured-carousel-slide">
+        <div class="featured-card" data-article-id="${escAttr(post.id)}">
+          <div class="featured-card__badge">${esc(category)}</div>
+          <h3 class="featured-card__title">${esc(title)}</h3>
+          <p class="featured-card__author">By ${esc(author)}</p>
+          <p class="featured-card__description">${esc(description)}</p>
+          <div class="featured-card__actions">
+            <button class="featured-card__link featured-card__link--primary" data-article-id="${escAttr(post.id)}">
+              View Details →
+            </button>
+            <a href="${escAttr(edLink)}" target="_blank" rel="noopener noreferrer" class="featured-card__link featured-card__link--secondary" onclick="event.stopPropagation()">
+              Open in Ed →
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Add click handlers to cards to open reader modal
+  track.querySelectorAll('.featured-card').forEach(card => {
+    const articleId = card.dataset.articleId;
+    if (articleId) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', (e) => {
+        // Don't trigger if clicking on a link
+        if (e.target.closest('.featured-card__link--secondary')) {
+          return;
+        }
+        // Open reader modal
+        openReader(articleId);
+      });
+    }
+  });
+
+  // Also handle the "View Details" button click
+  track.querySelectorAll('.featured-card__link--primary').forEach(btn => {
+    const articleId = btn.dataset.articleId;
+    if (articleId) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openReader(articleId);
+      });
+    }
+  });
+
+  // Arrow navigation
+  const prevBtn = document.querySelector('.featured-carousel-arrow--prev');
+  const nextBtn = document.querySelector('.featured-carousel-arrow--next');
+  const viewport = track.parentElement;
+  
+  if (!prevBtn || !nextBtn || !viewport) return;
+
+  let currentSlide = 0;
+  const totalSlides = featuredPosts.length;
+
+  const updateCarousel = () => {
+    const slideWidth = 100; // 100% per slide
+    track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+    
+    // Arrows are always enabled for circular carousel
+    prevBtn.disabled = false;
+    nextBtn.disabled = false;
+  };
+
+  prevBtn.addEventListener('click', () => {
+    // Circular: wrap to last slide when going back from first
+    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+    updateCarousel();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    // Circular: wrap to first slide when going forward from last
+    currentSlide = (currentSlide + 1) % totalSlides;
+    updateCarousel();
+  });
+
+  // Initialize
+  updateCarousel();
+}
+
 function buildCategoriesCarousel(all) {
   const container = $("#categoriesCarousel");
   if (!container) return;
@@ -779,7 +889,7 @@ function buildCategoriesCarousel(all) {
         <div class="category-card__image">
           ${imageHTML}
         </div>
-        <a href="directory.html?subcategory=${categoryParam}" class="category-card__button">
+        <a href="./directory.html?subcategory=${categoryParam}" class="category-card__button">
           Browse this category
         </a>
       </div>
@@ -1058,7 +1168,8 @@ async function main(){
       buildCatalogCategoryFilters(state.all);
       buildCatalogTagFilters(state.all);
     } else {
-      // Build categories carousel on Overview page
+      // Build featured carousel and categories carousel on Overview page
+      buildFeaturedCarousel(state.all);
       buildCategoriesCarousel(state.all);
     }
     

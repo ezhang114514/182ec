@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EECS182 Extra Credit Digest</title>
+  <title>Learning tools for Deep Learning</title>
 
   <!-- use YOUR folder name: css/styles.css -->
   <link rel="stylesheet" href="./css/styles.css" />
@@ -35,37 +35,57 @@
   <a class="skip" href="#content">Skip to content</a>
 
   <header class="top-title">
-    <span class="mastheadTitle">COMPSCI C182</span>
+    <span class="mastheadTitle">Learning tools for Deep Learning</span>
   </header>
 
   <main id="content" class="page">
     <!-- HERO -->
     <section class="hero hero--fullscreen">
-      <div class="hero__content hero__content--overlay">
-        <h1 class="hero__title">An Exploration of Special Participation E</h1>
-        <p class="dek">A curated collection of student contributions for COMPSCI C182. Explore submissions including Learning Tools & Tutors, Understanding Concepts, Cheatsheets & Notes, Generating Questions, New Content Creation, and Visualizations.</p>
+      <div class="hero-intro">
+        <p>UCB Fall 2025 EECS 182/282A Deep Learning Class developed AI/LLM-based learning tools to help them study the material in the class! These are all their submissions.</p>
+        <p>Website designed by: Guohao Lv, Shuwei Yang, and Edward Z. Zhang, students in EECS 182/282A.</p>
+        <p>Faculty: Prof. Anant Sahai and Prof. Gireeja Ranade</p>
       </div>
-      <img class="hero__bg" src="./assets/images/neural_network_black.gif" alt="Hero illustration" />
     </section>
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav" aria-label="Secondary">
-      <a href="index.html" class="bottom-nav__link">Overview</a>
-      <a href="directory.html" class="bottom-nav__link">Directory</a>
+      <a href="#highlight" class="bottom-nav__link">Examples</a>
+      <a href="#submission-type" class="bottom-nav__link">By submission type</a>
+      <a href="#concepts" class="bottom-nav__link">By concepts</a>
+      <a href="./directory.html" class="bottom-nav__link">See all submissions</a>
     </nav>
 
-    <!-- Tag Map Section -->
-    <section class="tag-map-section">
-      <h2 class="tag-map-heading">Course Concepts Map</h2>
-      <div id="tagMap" class="tag-map-container" aria-label="Tag frequency visualization"></div>
-    </section>
-
     <!-- Categories Carousel Section -->
-    <section class="categories-section">
+    <section id = "submission-type" class="categories-section">
       <h2 class="categories-heading">CATEGORIES</h2>
       <div class="categories-section__carousel-wrapper">
         <div id="categoriesCarousel" class="category-carousel" aria-label="Browse by category"></div>
         <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Carousel pages"></div>
+      </div>
+    </section>
+
+    <!-- Tag Map Section -->
+    <section id = "concepts" class="tag-map-section">
+      <h2 class="tag-map-heading">Course Concepts Map</h2>
+      <div id="tagMap" class="tag-map-container" aria-label="Tag frequency visualization"></div>
+    </section>
+
+    <!-- Featured Examples Carousel -->
+    <section id = "highlight" class="featured-examples-section">
+      <div class="featured-examples-container">
+        <h2 class="featured-examples-heading">Featured Examples</h2>
+        <div class="featured-carousel-wrapper">
+          <button class="featured-carousel-arrow featured-carousel-arrow--prev" aria-label="Previous slide">
+            <span>‹</span>
+          </button>
+          <div class="featured-carousel-viewport">
+            <div id="featuredCarousel" class="featured-carousel-track"></div>
+          </div>
+          <button class="featured-carousel-arrow featured-carousel-arrow--next" aria-label="Next slide">
+            <span>›</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -133,7 +153,21 @@
             <div class="dashboard-view" id="view-timeline">
               <h2 class="view-title">Daily Post Volume</h2>
               <p class="view-description">Bar chart showing the number of submissions per day over the entire period.</p>
-              <div class="timeline-chart" id="timelineChart"></div>
+              <div class="daily-chart-scroll" id="dailyChartScroll">
+                <div class="daily-chart-inner" id="dailyChartInner">
+                  <div class="timeline-chart" id="timelineChart"></div>
+                  <div class="timeline-labels" id="timelineLabels"></div>
+                </div>
+              </div>
+              <input
+                type="range"
+                id="dailyChartSlider"
+                class="daily-chart-slider"
+                min="0"
+                max="100"
+                value="0"
+                aria-label="Scroll Daily Post Volume Chart"
+              />
             </div>
 
             <!-- Categories View -->
@@ -187,9 +221,6 @@
           </div>
 
           <div class="quick-actions">
-            <button class="action-btn" id="backBtn" onclick="window.history.back()">
-              ← Back to list
-            </button>
             <div id="rLinks" class="action-links"></div>
             <button class="action-btn" id="copyLinkBtn">
               📋 Copy link
@@ -503,9 +534,13 @@
     
     function buildTimeline(byDate, dates) {
       const chart = document.getElementById('timelineChart');
+      const labelsContainer = document.getElementById('timelineLabels');
+      const scrollEl = document.getElementById('dailyChartScroll');
+      const innerEl = document.getElementById('dailyChartInner');
       
       // Clear previous content
       chart.innerHTML = '';
+      if (labelsContainer) labelsContainer.innerHTML = '';
       
       // Debug: Check for duplicates and verify data
       console.log('=== Timeline Debug ===');
@@ -548,6 +583,29 @@
       const maxCount = Math.max(...counts);
       console.log('Max count:', maxCount);
       console.log('Counts array length:', counts.length, 'Valid dates length:', validDates.length);
+
+      // --- Shared layout (bars + timeline) ---
+      const total = validDates.length;
+      const barGap = 6;
+      const minBarWidth = 14;   // if below this, we allow horizontal scroll instead of squishing more
+      const maxBarWidth = 80;   // prevents absurdly wide bars when there are few days
+      // Get available width from scroll container or chart's parent, accounting for padding
+      const scrollContainer = scrollEl || chart.closest('.daily-chart-scroll');
+      const available = scrollContainer?.clientWidth || chart.parentElement?.clientWidth || 900;
+      let barWidth = Math.floor((available - barGap * (total - 1)) / total);
+      barWidth = Math.min(maxBarWidth, Math.max(minBarWidth, barWidth));
+      // Calculate exact inner width: total bars + gaps between them (no trailing gap)
+      // This ensures the last bar ends exactly at innerWidth with no extra blank space
+      const innerWidth = total * barWidth + (total - 1) * barGap;
+
+      // Set widths: bars container is exact, labels container adds padding for edge labels
+      if (innerEl) innerEl.style.width = `${innerWidth}px`;
+      chart.style.width = `${innerWidth}px`;
+      chart.style.gap = `${barGap}px`;
+      // Labels container width matches bars, but CSS padding prevents clipping
+      if (labelsContainer) {
+        labelsContainer.style.width = `${innerWidth}px`;
+      }
       
       // Build bars only for valid dates
       validDates.forEach((date, i) => {
@@ -562,6 +620,8 @@
         const bar = document.createElement('div');
         bar.className = 'timeline-bar';
         bar.style.height = `${height}px`;
+        bar.style.width = `${barWidth}px`;
+        bar.style.flex = `0 0 ${barWidth}px`;
         bar.dataset.tooltip = `${date}: ${count} posts`;
         bar.dataset.date = date;
         bar.dataset.count = count;
@@ -573,11 +633,80 @@
         
         chart.appendChild(bar);
       });
+
+      // Build timeline labels aligned with bars (sparse ticks centered under bars)
+      if (labelsContainer) {
+        const targetTicks = window.innerWidth <= 768 ? 6 : 10;
+        const buildTickIndices = (n, desired) => {
+          if (n <= desired) return Array.from({length:n}, (_,i)=>i);
+          const ticks = [];
+          for (let t = 0; t < desired; t++) {
+            const idx = Math.round(t * (n - 1) / (desired - 1));
+            ticks.push(idx);
+          }
+          return Array.from(new Set(ticks));
+        };
+        // Format using the raw date string parts to avoid timezone shifts
+        const formatDate = (s) => {
+          const base = String(s || '').split('T')[0];
+          const [yy, mm, dd] = base.split('-');
+          if (!mm || !dd) return s;
+          return `${mm.padStart(2,'0')}/${dd.padStart(2,'0')}`;
+        };
+
+        const renderTicks = (desired) => {
+          labelsContainer.innerHTML = '';
+          const indices = buildTickIndices(total, desired);
+          indices.forEach((i) => {
+            const tick = document.createElement('span');
+            tick.className = 'tick';
+            tick.textContent = formatDate(validDates[i]);
+            const x = i * (barWidth + barGap) + (barWidth / 2);
+            // Clamp so tick text doesn't extend scrollable width
+            const clampedX = Math.min(innerWidth - 1, Math.max(1, x));
+            tick.style.left = `${clampedX}px`;
+            labelsContainer.appendChild(tick);
+          });
+        };
+
+        renderTicks(targetTicks);
+
+        // Extra safety: if ticks overlap, reduce tick count and rerender
+        requestAnimationFrame(() => {
+          const ticks = Array.from(labelsContainer.querySelectorAll('.tick'));
+          let overlap = false;
+          for (let i = 1; i < ticks.length; i++) {
+            const a = ticks[i - 1].getBoundingClientRect();
+            const b = ticks[i].getBoundingClientRect();
+            if (a.right > b.left) { overlap = true; break; }
+          }
+          if (overlap) {
+            renderTicks(Math.max(3, targetTicks - 2));
+          }
+        });
+      }
       
       // Verify bars created
       const barCount = chart.children.length;
       console.log('Bars created:', barCount);
       console.log('=== End Timeline Debug ===');
+
+      // Initialize slider/scroll sync (mobile) after render
+      initTimelineScrollSync();
+
+      // Re-render layout on resize (keeps bars + timeline locked together)
+      window.__dailyTimelineLast = { byDate, dates };
+      if (!window.__dailyTimelineResizeWired) {
+        window.__dailyTimelineResizeWired = true;
+        let t;
+        window.addEventListener('resize', () => {
+          clearTimeout(t);
+          t = setTimeout(() => {
+            const last = window.__dailyTimelineLast;
+            if (last) buildTimeline(last.byDate, last.dates);
+          }, 150);
+        });
+      }
     }
     
     // Timeline tooltip management
@@ -646,6 +775,41 @@
         timelineTooltip.remove();
         timelineTooltip = null;
       }
+    }
+
+    // Sync horizontal scroll with slider for the Daily Post Volume chart
+    function initTimelineScrollSync() {
+      const scrollEl = document.getElementById('dailyChartScroll');
+      const sliderEl = document.getElementById('dailyChartSlider');
+      if (!scrollEl || !sliderEl) return;
+
+      const getMaxScroll = () => Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+
+      const syncSliderFromScroll = () => {
+        const maxScroll = getMaxScroll();
+        const value = maxScroll <= 0 ? 0 : Math.round((scrollEl.scrollLeft / maxScroll) * 100);
+        sliderEl.value = String(value);
+      };
+
+      const syncScrollFromSlider = () => {
+        const maxScroll = getMaxScroll();
+        scrollEl.scrollLeft = (Number(sliderEl.value) / 100) * maxScroll;
+      };
+
+      // Remove then add to avoid duplicates after re-render
+      scrollEl.removeEventListener('scroll', syncSliderFromScroll);
+      sliderEl.removeEventListener('input', syncScrollFromSlider);
+
+      scrollEl.addEventListener('scroll', syncSliderFromScroll, { passive: true });
+      sliderEl.addEventListener('input', syncScrollFromSlider);
+
+      // Initialize position
+      setTimeout(() => {
+        // Clamp (width might have changed since last render)
+        scrollEl.scrollLeft = Math.min(scrollEl.scrollLeft, getMaxScroll());
+        syncSliderFromScroll();
+      }, 0);
+      window.addEventListener('resize', syncSliderFromScroll);
     }
     
     function buildCategoryBars(byCategory, total) {

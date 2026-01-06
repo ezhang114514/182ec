@@ -230,7 +230,7 @@ function buildTagMap(articles) {
         // Add click animation
         tile.classList.add('clicked');
         setTimeout(() => {
-          window.location.href = `directory.html?tag=${encodeURIComponent(tag)}`;
+          window.location.href = `./directory.html?tag=${encodeURIComponent(tag)}`;
         }, 150);
       });
     });
@@ -383,7 +383,7 @@ function buildTagMap(articles) {
       
       tile.addEventListener('click', () => {
         const tag = tile.dataset.tag;
-        window.location.href = `directory.html?tag=${encodeURIComponent(tag)}`;
+        window.location.href = `./directory.html?tag=${encodeURIComponent(tag)}`;
       });
     });
   }
