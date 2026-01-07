@@ -715,8 +715,8 @@ function buildTagChips(all){
 }
 
 function buildFeaturedCarousel(all) {
-  const track = $("#featuredCarousel");
-  if (!track) return;
+  const grid = $("#featuredExamplesGrid");
+  if (!grid) return;
 
   // Featured post IDs (in order from the image)
   const featuredIds = [
@@ -729,8 +729,13 @@ function buildFeaturedCarousel(all) {
   // Find the featured posts
   const featuredPosts = featuredIds.map(id => all.find(a => a.id === id)).filter(Boolean);
 
-  // Build slides (one post per slide)
-  track.innerHTML = featuredPosts.map((post, index) => {
+  if (featuredPosts.length === 0) {
+    console.error('[Featured Examples] No featured posts found. Check IDs:', featuredIds);
+    return;
+  }
+
+  // Build grid items (one post per card)
+  grid.innerHTML = featuredPosts.map((post) => {
     const edLink = post.links?.ed || '#';
     const title = post.title || "Untitled";
     const author = post.student || "Anonymous";
@@ -738,27 +743,25 @@ function buildFeaturedCarousel(all) {
     const description = post.dek || post.summary || "No description available.";
     
     return `
-      <div class="featured-carousel-slide">
-        <div class="featured-card" data-article-id="${escAttr(post.id)}">
-          <div class="featured-card__badge">${esc(category)}</div>
-          <h3 class="featured-card__title">${esc(title)}</h3>
-          <p class="featured-card__author">By ${esc(author)}</p>
-          <p class="featured-card__description">${esc(description)}</p>
-          <div class="featured-card__actions">
-            <button class="featured-card__link featured-card__link--primary" data-article-id="${escAttr(post.id)}">
-              View Details →
-            </button>
-            <a href="${escAttr(edLink)}" target="_blank" rel="noopener noreferrer" class="featured-card__link featured-card__link--secondary" onclick="event.stopPropagation()">
-              Open in Ed →
-            </a>
-          </div>
+      <div class="featured-card" data-article-id="${escAttr(post.id)}">
+        <div class="featured-card__badge">${esc(category)}</div>
+        <h3 class="featured-card__title">${esc(title)}</h3>
+        <p class="featured-card__author">By ${esc(author)}</p>
+        <p class="featured-card__description">${esc(description)}</p>
+        <div class="featured-card__actions">
+          <button class="featured-card__link featured-card__link--primary" data-article-id="${escAttr(post.id)}">
+            View Details →
+          </button>
+          <a href="${escAttr(edLink)}" target="_blank" rel="noopener noreferrer" class="featured-card__link featured-card__link--secondary" onclick="event.stopPropagation()">
+            Open in Ed →
+          </a>
         </div>
       </div>
     `;
   }).join("");
 
   // Add click handlers to cards to open reader modal
-  track.querySelectorAll('.featured-card').forEach(card => {
+  grid.querySelectorAll('.featured-card').forEach(card => {
     const articleId = card.dataset.articleId;
     if (articleId) {
       card.style.cursor = 'pointer';
@@ -774,7 +777,7 @@ function buildFeaturedCarousel(all) {
   });
 
   // Also handle the "View Details" button click
-  track.querySelectorAll('.featured-card__link--primary').forEach(btn => {
+  grid.querySelectorAll('.featured-card__link--primary').forEach(btn => {
     const articleId = btn.dataset.articleId;
     if (articleId) {
       btn.addEventListener('click', (e) => {
@@ -783,40 +786,6 @@ function buildFeaturedCarousel(all) {
       });
     }
   });
-
-  // Arrow navigation
-  const prevBtn = document.querySelector('.featured-carousel-arrow--prev');
-  const nextBtn = document.querySelector('.featured-carousel-arrow--next');
-  const viewport = track.parentElement;
-  
-  if (!prevBtn || !nextBtn || !viewport) return;
-
-  let currentSlide = 0;
-  const totalSlides = featuredPosts.length;
-
-  const updateCarousel = () => {
-    const slideWidth = 100; // 100% per slide
-    track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
-    
-    // Arrows are always enabled for circular carousel
-    prevBtn.disabled = false;
-    nextBtn.disabled = false;
-  };
-
-  prevBtn.addEventListener('click', () => {
-    // Circular: wrap to last slide when going back from first
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    updateCarousel();
-  });
-
-  nextBtn.addEventListener('click', () => {
-    // Circular: wrap to first slide when going forward from last
-    currentSlide = (currentSlide + 1) % totalSlides;
-    updateCarousel();
-  });
-
-  // Initialize
-  updateCarousel();
 }
 
 function buildCategoriesCarousel(all) {
