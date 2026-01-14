@@ -87,6 +87,63 @@ function stripHtml(html){
   return div.textContent || div.innerText || "";
 }
 
+// Extract external URLs from HTML or text content
+function extractExternalLinks(html, text) {
+  const links = new Set();
+  
+  // Extract from HTML (if present)
+  if (html) {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    const anchorTags = tempDiv.querySelectorAll("a[href]");
+    anchorTags.forEach(a => {
+      const href = a.getAttribute("href");
+      if (href && (href.startsWith("http://") || href.startsWith("https://"))) {
+        // Clean up URL (remove trailing punctuation that might not be part of URL)
+        let cleanUrl = href.trim();
+        // Remove common trailing punctuation
+        cleanUrl = cleanUrl.replace(/[.,;:!?]+$/, '');
+        links.add(cleanUrl);
+      }
+    });
+    
+    // Also extract plain URLs from text content (including those not in anchor tags)
+    const textContent = tempDiv.textContent || tempDiv.innerText || "";
+    // Improved regex to match URLs more accurately
+    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]()]+[^\s<>"{}|\\^`\[\]().,;:!?]/gi;
+    const matches = textContent.match(urlRegex);
+    if (matches) {
+      matches.forEach(url => {
+        // Clean up URL
+        let cleanUrl = url.trim();
+        // Remove trailing punctuation that's likely not part of URL
+        cleanUrl = cleanUrl.replace(/[.,;:!?]+$/, '');
+        if (cleanUrl.length > 0) {
+          links.add(cleanUrl);
+        }
+      });
+    }
+  }
+  
+  // Extract from plain text (if provided separately)
+  if (text) {
+    const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]()]+[^\s<>"{}|\\^`\[\]().,;:!?]/gi;
+    const matches = text.match(urlRegex);
+    if (matches) {
+      matches.forEach(url => {
+        let cleanUrl = url.trim();
+        cleanUrl = cleanUrl.replace(/[.,;:!?]+$/, '');
+        if (cleanUrl.length > 0) {
+          links.add(cleanUrl);
+        }
+      });
+    }
+  }
+  
+  // Return unique, sorted URLs
+  return Array.from(links).sort();
+}
+
 function render(){
   const items = state.all.filter(matches);
   const sorted = sortItems(items);
@@ -171,7 +228,7 @@ function render(){
                 <div class="similar-articles__list">
                   ${similar.map(sim => `
                     <a href="#" class="similar-article" data-open="${escAttr(sim.id)}">
-                      <span class="similar-article__title">${esc(sim.title || "")}</span>
+                      <span class="similar-article__title">${esc(cleanTitle(sim.title) || "")}</span>
                       <span class="similar-article__category">${esc(sim.subcategory || sim.category || "")}</span>
                     </a>
                   `).join('')}
@@ -183,7 +240,7 @@ function render(){
 
     el.innerHTML = `
           <h2 class="result-item__title">
-        <a href="#" data-open="${escAttr(a.id)}">${esc(a.title || "")}</a>
+        <a href="#" data-open="${escAttr(a.id)}">${esc(cleanTitle(a.title) || "")}</a>
           </h2>
           <p class="result-item__preview">${esc(preview)}</p>
           <div class="result-item__meta">${esc(fmtMeta(a))}</div>
@@ -213,7 +270,7 @@ function render(){
       const div = document.createElement("div");
       div.className = "mini-item";
       div.innerHTML = `
-        <a href="#" data-open="${escAttr(a.id)}">${esc(a.title || "")}</a>
+        <a href="#" data-open="${escAttr(a.id)}">${esc(cleanTitle(a.title) || "")}</a>
         <span>${esc(fmtMeta(a))}</span>
       `;
       highlights.appendChild(div);
@@ -229,7 +286,7 @@ function setHero(a){
   const btn = $("#heroOpen");
   
   if (heroKicker) heroKicker.textContent = `Featured • Category ${a.category}${a.subcategory ? ` • ${a.subcategory}` : ""}`;
-  if (heroTitle) heroTitle.textContent = a.title || "";
+  if (heroTitle) heroTitle.textContent = cleanTitle(a.title) || "";
   if (heroDek) heroDek.textContent = a.dek || "";
   if (heroMeta) heroMeta.textContent = fmtMeta(a);
   if (btn) {
@@ -242,8 +299,14 @@ function openReader(id){
   const a = state.all.find(x => x.id === id);
   if (!a) return;
 
+  // Store current URL state before opening modal (for back button)
+  const currentUrl = window.location.href;
+  if (window.readerPreviousUrl === undefined) {
+    window.readerPreviousUrl = currentUrl;
+  }
+
   // Left Column: Metadata
-  $("#rTitle").textContent = a.title || "";
+  $("#rTitle").textContent = cleanTitle(a.title) || "";
   $("#rAuthor").textContent = a.student || "Unknown";
   $("#rDate").textContent = a.date || "Unknown";
   $("#rCategory").textContent = a.subcategory || a.category || "Uncategorized";
@@ -271,20 +334,6 @@ function openReader(id){
   }
   $("#rLinks").innerHTML = linkBits.join(" ") || "";
 
-  // Copy link button
-  const copyLinkBtn = $("#copyLinkBtn");
-  if (copyLinkBtn) {
-    copyLinkBtn.onclick = () => {
-      const url = window.location.origin + window.location.pathname + `?article=${id}`;
-      navigator.clipboard.writeText(url).then(() => {
-        copyLinkBtn.textContent = "✓ Copied!";
-        setTimeout(() => {
-          copyLinkBtn.textContent = "📋 Copy link";
-        }, 2000);
-      });
-    };
-  }
-
   // Right Column: Accordion Sections
   
   // Overview section - use summary if available, otherwise dek, otherwise truncated body
@@ -311,6 +360,65 @@ function openReader(id){
 
   // Render LaTeX/MathJax after content is loaded
   renderMathJax($("#rBody"));
+
+  // External Links section - use external_links field if available, otherwise extract from body_html and summary
+  let externalLinks = a.external_links || [];
+  if (externalLinks.length === 0) {
+    // Fallback: extract from content if external_links field is not present
+    externalLinks = extractExternalLinks(a.body_html, a.summary);
+  }
+  const externalLinksSection = $("#rExternalLinksSection");
+  if (externalLinks.length > 0) {
+    externalLinksSection.style.display = "block";
+    const externalLinksHTML = `
+      <div class="attachments-section">
+        <div class="attachment-grid">
+          ${externalLinks.map(url => {
+            // Try to determine a friendly name from the URL
+            let displayName = url;
+            try {
+              const urlObj = new URL(url);
+              // Use domain + path for display, but truncate if too long
+              displayName = urlObj.hostname.replace('www.', '') + urlObj.pathname;
+              if (displayName.length > 60) {
+                displayName = displayName.substring(0, 57) + '...';
+              }
+            } catch (e) {
+              // If URL parsing fails, just truncate the original URL
+              if (displayName.length > 60) {
+                displayName = displayName.substring(0, 57) + '...';
+              }
+            }
+            
+            // Determine icon based on domain
+            let icon = '🔗';
+            try {
+              const urlObj = new URL(url);
+              const hostname = urlObj.hostname.toLowerCase();
+              if (hostname.includes('github')) icon = '💻';
+              else if (hostname.includes('claude') || hostname.includes('chatgpt') || hostname.includes('openai')) icon = '🤖';
+              else if (hostname.includes('youtube') || hostname.includes('youtu.be')) icon = '▶️';
+              else if (hostname.includes('colab') || hostname.includes('jupyter')) icon = '📓';
+              else if (hostname.includes('vercel') || hostname.includes('netlify') || hostname.includes('github.io')) icon = '🌐';
+            } catch (e) {
+              // Keep default icon
+            }
+            
+            return `
+              <a href="${escAttr(url)}" target="_blank" rel="noreferrer" class="attachment-card">
+                <span class="attachment-icon">${icon}</span>
+                <span class="attachment-name">${esc(displayName)}</span>
+              </a>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+    $("#rExternalLinks").innerHTML = externalLinksHTML;
+  } else {
+    externalLinksSection.style.display = "none";
+    $("#rExternalLinks").innerHTML = "";
+  }
 
   // Attachments section
   const at = a.attachments || [];
@@ -341,6 +449,27 @@ function openReader(id){
 
   // Initialize accordions
   initAccordions();
+
+  // Setup back button handler (only on directory page)
+  const backBtn = $("#backBtn");
+  if (backBtn && isDirectoryPage()) {
+    // Remove inline onclick and set up proper handler
+    backBtn.removeAttribute('onclick');
+    backBtn.onclick = (e) => {
+      e.preventDefault();
+      // Close the modal
+      const reader = $("#reader");
+      if (reader) {
+        reader.close();
+      }
+      // Restore URL to directory page without article parameter
+      const url = new URL(window.location);
+      url.searchParams.delete('article');
+      window.history.replaceState({}, '', url);
+      // Clear stored URL
+      window.readerPreviousUrl = undefined;
+    };
+  }
 
   $("#reader").showModal();
 }
@@ -737,7 +866,7 @@ function buildFeaturedCarousel(all) {
   // Build grid items (one post per card)
   grid.innerHTML = featuredPosts.map((post) => {
     const edLink = post.links?.ed || '#';
-    const title = post.title || "Untitled";
+    const title = cleanTitle(post.title) || "Untitled";
     const author = post.student || "Anonymous";
     const category = post.subcategory || "Other";
     const description = post.dek || post.summary || "No description available.";
@@ -799,8 +928,32 @@ function buildCategoriesCarousel(all) {
     subcats.set(s, (subcats.get(s) || 0) + 1);
   }
 
-  // Sort by count (descending)
-  const sorted = [...subcats.entries()].sort((a, b) => b[1] - a[1]);
+  // Custom category order
+  const categoryOrder = [
+    "Learning Tools & Tutors",
+    "Understanding Concepts",
+    "Visualizations",
+    "Cheatsheets & Notes",
+    "Generating Questions",
+    "New Content Creation",
+    "Other"
+  ];
+  
+  // Sort: first by custom order, then by count for categories not in order
+  const sorted = [...subcats.entries()].sort((a, b) => {
+    const aIndex = categoryOrder.indexOf(a[0]);
+    const bIndex = categoryOrder.indexOf(b[0]);
+    
+    // If both are in the custom order, sort by order
+    if (aIndex !== -1 && bIndex !== -1) {
+      return aIndex - bIndex;
+    }
+    // If only one is in the order, prioritize it
+    if (aIndex !== -1) return -1;
+    if (bIndex !== -1) return 1;
+    // If neither is in the order, sort by count (descending)
+    return b[1] - a[1];
+  });
 
   // Category image placeholders/icons (can be extended with real images via categoryImages map)
   const categoryIcons = {
@@ -853,15 +1006,15 @@ function buildCategoriesCarousel(all) {
       : `<div class="category-card__image-placeholder">${icon}</div>`;
     
     return `
-      <div class="category-card">
+      <a href="./directory.html?subcategory=${categoryParam}" class="category-card">
         <h3 class="category-card__title">${esc(subcat)}</h3>
         <div class="category-card__image">
           ${imageHTML}
         </div>
-        <a href="./directory.html?subcategory=${categoryParam}" class="category-card__button">
+        <div class="category-card__button">
           Browse this category
-        </a>
-      </div>
+        </div>
+      </a>
     `;
   }).join("");
   
@@ -1068,6 +1221,13 @@ function showError(msg){
 
 function esc(s){ return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); }
 function escAttr(s){ return esc(s).replaceAll('"',"&quot;"); }
+
+// Remove "Special Participation E:" prefix from titles
+function cleanTitle(title) {
+  if (!title) return title;
+  // Remove various forms of the prefix: "Special Participation E:", "Special Participation E", "Special Participation E2", etc.
+  return title.replace(/^Special\s+Participation\s+E\s*:?\s*/i, '').trim();
+}
 
 // Detect which page we're on
 function isDirectoryPage() {

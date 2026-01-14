@@ -681,7 +681,7 @@ html:has(.page-directory),
   justify-content: center;
   min-height: auto;
   max-height: none;
-  padding: 24px 5% !important;
+  padding: 20px 5% !important;
   border: none !important;
   border-radius: 0 !important;
   overflow: hidden;
@@ -744,11 +744,11 @@ html:has(.page-directory),
 
 .hero-intro{
   color: rgba(255,255,255,0.92);
-  font-size: 22px;
-  line-height: 1.7;
+  font-size: 18px;
+  line-height: 1.6;
   max-width: 1200px;
   width: 100%;
-  margin: 16px auto 80px;
+  margin: 12px auto 40px;
   text-align: center;
   padding: 0 24px;
   box-sizing: border-box;
@@ -1006,11 +1006,11 @@ html:has(.page-directory),
   display: flex;
   justify-content: center;
   gap: 0;
-  padding: 20px 18px;
+  padding: 16px 18px;
   background: #000;
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto 80px;
+  margin: 0 auto 50px;
   box-sizing: border-box;
   position: relative;
   border-top: 1px solid rgba(255, 255, 255, 0.25);
@@ -1067,7 +1067,7 @@ html:has(.page-directory),
 .featured-examples-section {
   background: #000;
   color: #fff;
-  padding: 80px 0;
+  padding: 50px 0;
   width: 100%;
   position: relative;
   overflow: visible; /* Ensure section doesn't clip hover effects */
@@ -1085,7 +1085,7 @@ html:has(.page-directory),
   font-weight: 400;
   text-align: center;
   color: #fff;
-  margin: 0 auto 48px;
+  margin: 0 auto 36px;
   letter-spacing: 0.02em;
   line-height: 1.1;
 }
@@ -1274,7 +1274,7 @@ html:has(.page-directory),
 .tag-map-section {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 30px 20px 60px;
+  padding: 20px 20px 40px;
     width: 100%;
   position: relative;
 }
@@ -1286,8 +1286,8 @@ html:has(.page-directory),
   font-weight: 400;
     text-align: center;
   color: #fff;
-  margin: 0 auto 60px;
-  padding-top: 20px;
+  margin: 0 auto 40px;
+  padding-top: 10px;
   letter-spacing: 0.02em;
   line-height: 1.1;
   width: 100%;
@@ -1607,7 +1607,7 @@ html:has(.page-directory),
 .categories-section {
   background: #000;
   color: #fff;
-  padding: 0 0 60px;
+  padding: 0 0 40px;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
@@ -1629,8 +1629,8 @@ html:has(.page-directory),
   font-weight: 400;
   text-align: center;
   color: #fff;
-  margin: 0 auto 60px;
-  padding-top: 20px;
+  margin: 0 auto 40px;
+  padding-top: 10px;
   letter-spacing: 0.02em;
   line-height: 1.1;
   width: 100%;
@@ -1777,6 +1777,8 @@ html:has(.page-directory),
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   /* REQUIREMENT 1: Ensure partial visibility for peek effect */
   margin-right: 0;
+  text-decoration: none;
+  color: inherit;
 }
 
 .category-card:hover {
@@ -1826,13 +1828,13 @@ html:has(.page-directory),
   border: none;
   border-radius: 0;
   padding: 0;
-  cursor: pointer;
   text-decoration: none;
   display: inline-block;
   transition: all 0.2s;
+  pointer-events: none;
 }
 
-.category-card__button:hover {
+.category-card:hover .category-card__button {
   text-decoration: underline;
   color: #fff;
 }
@@ -2177,7 +2179,7 @@ html:has(.page-directory),
 .dashboard-section {
   background: #000;
   color: #c9d1d9;
-  padding: 80px 20px;
+  padding: 50px 20px;
   width: 100%;
   margin-top: 0;
 }
@@ -2256,6 +2258,7 @@ html:has(.page-directory),
   display: block;
   position: relative;
   overflow: visible;
+  text-align: center;
 }
 
 .dashboard-view {
@@ -2292,17 +2295,19 @@ html:has(.page-directory),
   font-size: 28px;
   font-weight: 600;
   color: #fff;
-  margin: 0 0 12px 0;
+  margin: 0 auto 12px;
   letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .view-description {
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   font-size: 15px;
   color: #8b949e;
-  margin: 0 0 24px 0;
+  margin: 0 auto 24px;
   line-height: 1.6;
   max-width: 700px;
+  text-align: center;
 }
 
 
@@ -2324,7 +2329,9 @@ html:has(.page-directory),
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-top: 24px;
+  margin: 24px auto 0;
+  max-width: 1000px;
+  justify-content: center;
 }
 
 .stat-card {
@@ -2372,9 +2379,12 @@ html:has(.page-directory),
 .heatmap-container {
   overflow-x: auto;
   padding: 24px 0;
-  margin: 20px 0;
+  margin: 20px auto;
   width: 100%;
   max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .heatmap-container::-webkit-scrollbar {
@@ -2400,8 +2410,9 @@ html:has(.page-directory),
   gap: 4px;
   min-width: fit-content;
   width: 100%;
-  justify-content: flex-start;
+  justify-content: center;
   max-width: 100%;
+  margin: 0 auto;
 }
 
 .heatmap-week {
@@ -2461,10 +2472,11 @@ html:has(.page-directory),
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 24px;
+  margin: 24px auto 0;
   font-size: 13px;
   color: #8b949e;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  justify-content: center;
 }
 
 .heatmap-legend-item {
@@ -2478,12 +2490,14 @@ html:has(.page-directory),
 .month-labels {
   display: flex;
   gap: 4px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
   font-size: 12px;
   color: #8b949e;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
   padding-left: 2px;
   min-width: fit-content;
+  justify-content: center;
+  width: fit-content;
 }
 
 .month-label {
@@ -2581,8 +2595,10 @@ html:has(.page-directory),
   max-width: 100%;
   overflow-x: visible;
   padding: 0;
-  margin: 0;
+  margin: 0 auto;
   box-sizing: border-box;
+  display: flex;
+  justify-content: center;
 }
 
 .daily-chart-inner {
@@ -2681,6 +2697,8 @@ html:has(.page-directory),
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .week-card {
@@ -2779,6 +2797,8 @@ html:has(.page-directory),
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .category-row {

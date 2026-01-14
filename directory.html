@@ -128,13 +128,10 @@
           </div>
 
           <div class="quick-actions">
-            <button class="action-btn" id="backBtn" onclick="window.history.back()">
+            <button class="action-btn" id="backBtn">
               ← Back to list
             </button>
             <div id="rLinks" class="action-links"></div>
-            <button class="action-btn" id="copyLinkBtn">
-              📋 Copy link
-            </button>
           </div>
         </aside>
 
@@ -154,6 +151,14 @@
               <span class="accordion-icon">▼</span>
             </button>
             <div class="accordion-content active" id="rBody"></div>
+          </div>
+
+          <div class="accordion-section" data-section="external-links" id="rExternalLinksSection" style="display: none;">
+            <button class="accordion-header" aria-expanded="false">
+              <span>External Links</span>
+              <span class="accordion-icon">▼</span>
+            </button>
+            <div class="accordion-content" id="rExternalLinks"></div>
           </div>
 
           <div class="accordion-section" data-section="attachments" id="rAttachmentsSection" style="display: none;">
